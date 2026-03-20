@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Регистрация | ITProger Forum</title>
+    <!-- <link rel="icon" href="static/img/icon" type="image/x-icon"> -->
+
+    <link href="static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/css/mystyle.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="bg-light border-bottom py-3">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="base.html" class="text-decoration-none d-flex align-items-center gap-2">
+                    <!-- <img src="static/img/icon" alt="Logo" width="32" height="32"> -->
+                    <span class="fs-5 fw-bold text-dark">ITProger Forum</span>
+                </a>
+                <a href="login.html" class="btn btn-outline-secondary btn-sm">Войти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-7 col-sm-9">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4 p-md-5">
+                        <h1 class="h3 text-center mb-4">Создать аккаунт</h1>
+
+                            <div class="mb-3">
+                                <label for="id_email" class="form-label fw-bold">
+                                    Email <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" class="form-control" id="id_email" name="email"
+                                    placeholder="name@example.com" value="" autocomplete="email" maxlength="200"
+                                    required>
+
+                                <div class="form-text">
+                                    Используйте действующий email для подтверждения.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_username" class="form-label fw-bold">
+                                    Имя пользователя <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="id_username" name="username"
+                                    placeholder="Как к вам обращаться" value="" autocomplete="username" maxlength="50"
+                                    required>
+                                <div class="form-text">
+                                    3-50 символов. Только буквы, цифры и @/./+/-/_.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_password1" class="form-label fw-bold">
+                                    Пароль <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" class="form-control" id="id_password1" name="password1"
+                                    placeholder="••••••••" autocomplete="new-password" maxlength="50" required>
+
+                                <div class="form-text">
+                                    Минимум 8 символов. Не используйте простые пароли.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_password2" class="form-label fw-bold">
+                                    Подтвердите пароль <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" class="form-control" id="id_password2" name="password2"
+                                    placeholder="••••••••" autocomplete="new-password" maxlength="50" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 mb-3">
+                                Зарегистрироваться
+                            </button>
+
+                        <div class="text-center">
+                            <p class="mb-0 text-muted">
+                                Уже есть аккаунт?
+                                <a href="login.html" class="text-decoration-none fw-bold">
+                                    Войти
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark text-light py-3 mt-auto">
+        <div class="container text-center">
+            <small>&copy; 2026 ITProger Forum.</small>
+        </div>
+    </footer>
+
+    <script src="static/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
