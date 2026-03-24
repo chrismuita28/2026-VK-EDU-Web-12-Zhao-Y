@@ -1,0 +1,171 @@
+<html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ItProger Forum</title>
+    <!-- <link rel="icon" href="static/img/icon" type="image/x-icon"> -->
+
+    <link href="static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/css/mystyle.css" rel="stylesheet">
+
+    <style>
+        main {
+            flex: 1 0 auto;
+            display: flex;           /* ← Включаем flex */
+            flex-direction: column;
+        }
+
+        .card {
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 767px) {
+            .header-search {
+                order: 3;
+                width: 100vh;
+                margin-top: 1rem;
+            }
+
+            .header-logo {
+                order: 1;
+            }
+
+            .header-actions {
+                order: 2;
+                width: 100vh;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="bg-light border-bottom py-3">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+
+                <a href="base.html" class="header-logo text-decoration-none d-flex align-items-center gap-2">
+                    <!-- <img src="static/img/icon" alt="Logo" width="32" height="32"> -->
+                    <span class="fs-5 fw-bold text-dark">ItProger Forum</span>
+                </a>
+
+                <form class="header-search d-flex flex-grow-1" style="max-width: 400px;" role="search" action="#" method="get">
+                    <input class="form-control me-2" type="search" placeholder="Поиск..." aria-label="Search">
+                    <button class="btn btn-outline-secondary" type="submit">Найти</button>
+                </form>
+
+                <div class="header-actions d-flex align-items-center gap-2">
+                    <a href="login.html" class="btn btn-outline-secondary btn-sm">Войти</a>
+                    <a href="signup.html" class="btn btn-primary btn-sm">Регистрация</a>
+                    <a href="ask.html" class="btn btn-success btn-sm">+ Вопрос</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-4">
+        <div class="row g-4">
+            <div class="col-lg-8 col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <a href="question.html" class="text-decoration-none">
+                            <h5 class="card-title">Как подключить Bootstrap локально?</h5>
+                        </a>
+                        <p class="card-text">Привет! Я пытаюсь подключить Bootstrap к своему проекту без использования CDN. Скачал файлы...</p>
+                        
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <a href="#" class="badge bg-secondary text-decoration-none hover-bg-dark">#bootstrap</a>
+                            <a href="#" class="badge bg-secondary text-decoration-none hover-bg-dark">#css</a>
+                            <a href="#" class="badge bg-secondary text-decoration-none hover-bg-dark">#html</a>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <a href="question.html#answer-form" class="btn btn-sm btn-outline-primary">
+                                Ответить
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
+                                <img src="static/img/like_icon.png" alt="Лайк" width="20" height="14">
+                                <span>20</span>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <img src="static/img/dislike_icon.png" alt="Дизлайк" width="20" height="14">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="col-lg-4 col-md-12">
+                <div class="card">
+                    <div class="card-header fw-bold">Popular tags</div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="#" class="badge bg-secondary text-decoration-none">#python</a>
+                            <a href="#" class="badge bg-secondary text-decoration-none">#javascript</a>
+                            <a href="#" class="badge bg-secondary text-decoration-none">#css</a>
+                            <a href="#" class="badge bg-secondary text-decoration-none">#html</a>
+                            <a href="#" class="badge bg-secondary text-decoration-none">#bootstrap</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header fw-bold">Best members</div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="d-flex align-items-center gap-2 py-1">
+                                <img src="static/img/kakoyto-avatar" alt="" width="24" height="24" class="rounded-circle bg-secondary">
+                                <a href="profile.html" class="text-decoration-none">alex_dev</a>
+                                <span class="text-muted small ms-auto">1.2k</span>
+                            </li>
+                            <li class="d-flex align-items-center gap-2 py-1">
+                                <img src="static/img/kakoyto-avatar" alt="" width="24" height="24" class="rounded-circle bg-secondary">
+                                <a href="profile.html" class="text-decoration-none">maria_code</a>
+                                <span class="text-muted small ms-auto">980</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <nav aria-label="Пагинация вопросов" class="mb-4 mt-auto">
+            <ul class="pagination justify-content-center">
+
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Первая">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">1</span>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="#">2</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="#">3</a>
+                </li>
+
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Последняя">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </main>
+
+    <footer class="bg-dark text-light py-3 mt-auto">
+        <div class="container text-center">
+            <small>&copy; 2026 ItProger Forum</small>
+        </div>
+    </footer>
+
+    <script src="static/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
