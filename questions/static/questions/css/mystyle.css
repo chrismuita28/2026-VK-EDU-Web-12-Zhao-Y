@@ -1,0 +1,47 @@
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+footer {
+    flex-shrink: 0;
+}
+
+.avatar-placeholder {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 2rem;
+}
+
+main {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.card {
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 767px) {
+    .header-search {
+        order: 3;
+        width: 100vh;
+        margin-top: 1rem;
+    }
+
+    .header-logo {
+        order: 1;
+    }
+
+    .header-actions {
+        order: 2;
+        width: 100vh;
+        justify-content: center;
+    }
+}
