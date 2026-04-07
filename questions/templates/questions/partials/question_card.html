@@ -2,19 +2,19 @@
 
 <div class="card">
     <div class="card-body">
-        <a href="question.html" class="text-decoration-none">
+        <a href="{% url 'questions:question' question.id %}" class="text-decoration-none">
             <h5 class="card-title">Как подключить Bootstrap локально? {{question.title}}</h5>
         </a>
         <p class="card-text">Привет! Я пытаюсь подключить Bootstrap к своему проекту без использования CDN. Скачал файлы {{question.text}}</p>
         
         <div class="d-flex flex-wrap gap-2 mb-3">
-            <a href="#" class="badge bg-secondary text-decoration-none hover-bg-dark">#bootstrap</a>
-            <a href="#" class="badge bg-secondary text-decoration-none hover-bg-dark">#css</a>
-            <a href="#" class="badge bg-secondary text-decoration-none hover-bg-dark">#html</a>
+            <a href="{% url 'questions:tag' 'bootstrap' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#bootstrap</a>
+            <a href="{% url 'questions:tag' 'css' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#css</a>
+            <a href="{% url 'questions:tag' 'html' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#html</a>
         </div>
         
         <div class="d-flex gap-2">
-            <a href="question.html#answer-form" class="btn btn-sm btn-outline-primary">
+            <a href="#" class="btn btn-sm btn-outline-primary">
                 Ответить
             </a>
             <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">

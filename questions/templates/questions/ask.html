@@ -1,4 +1,5 @@
-<html>
+{% load static %}
+
 <html lang="ru">
 
 <head>
@@ -7,8 +8,8 @@
     <title>Новый вопрос | ItProger Forum</title>
     <!-- <link rel="icon" href="static/img/icon" type="image/x-icon"> -->
 
-    <link href="static/css/bootstrap.min.css" rel="stylesheet">
-    <link href="static/css/mystyle.css" rel="stylesheet">
+    <link href="{% static 'questions/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'questions/css/mystyle.css' %}" rel="stylesheet">
 
     <style>
         body {
@@ -27,11 +28,11 @@
     <header class="bg-light border-bottom py-3">
         <div class="container">
             <div class="d-flex align-items-center justify-content-between">
-                <a href="base.html" class="text-decoration-none d-flex align-items-center gap-2">
+                <a href="{% url 'questions:index' %}" class="text-decoration-none d-flex align-items-center gap-2">
                     <!-- <link rel="icon" href="static/img/icon" type="image/x-icon"> -->
                     <span class="fs-5 fw-bold text-dark">ItProger Forum</span>
                 </a>
-                <a href="login.html" class="btn btn-outline-secondary btn-sm">Войти</a>
+                <a href="{% url 'core:login' %}" class="btn btn-outline-secondary btn-sm">Войти</a>
             </div>
         </div>
     </header>
@@ -77,10 +78,10 @@
                 </div>
 
                 <div class="d-flex gap-2">
-                    <a href="question.html" class="btn btn-primary btn-lg">
+                    <a href="{% url 'questions:question' 1 %}" class="btn btn-primary btn-lg">
                         Опубликовать вопрос
                     </a>
-                    <a href="base.html" class="btn btn-outline-secondary btn-lg">
+                    <a href="{% url 'questions:index' %}" class="btn btn-outline-secondary btn-lg">
                         Отмена
                     </a>
                 </div>
@@ -88,13 +89,9 @@
         </div>
     </main>
 
-    <footer class="bg-dark text-light py-3 mt-auto">
-        <div class="container text-center">
-            <small>&copy; 2026 ItProger Forum.</small>
-        </div>
-    </footer>
+    {% include "questions/partials/footer.html" %}
 
-    <script src="static/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
 
     <script>
         const titleField = document.getElementById('id_title');

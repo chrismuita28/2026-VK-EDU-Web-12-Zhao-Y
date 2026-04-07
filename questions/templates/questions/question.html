@@ -1,4 +1,5 @@
-<html>
+{% load static %}
+
 <html lang="ru">
 
 <head>
@@ -7,8 +8,8 @@
     <title>Как подключить Bootstrap локально? | ItProger Forum</title>
     <!-- <link rel="icon" href="static/img/favicon.ico" type="image/x-icon"> -->
 
-    <link href="static/css/bootstrap.min.css" rel="stylesheet">
-    <link href="static/css/mystyle.css" rel="stylesheet">
+    <link href="{% static 'questions/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'questions/css/mystyle.css' %}" rel="stylesheet">
 
     <style>
         .badge.hover-bg-dark:hover {
@@ -48,7 +49,7 @@
         <div class="container">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
 
-                <a href="base.html" class="text-decoration-none d-flex align-items-center gap-2">
+                <a href="{% url 'questions:index' %}" class="text-decoration-none d-flex align-items-center gap-2">
                     <span class="fs-5 fw-bold text-dark">ItProger Forum</span>
                 </a>
 
@@ -58,8 +59,8 @@
                 </form>
 
                 <div class="d-flex align-items-center gap-2">
-                    <a href="profile.html" class="btn btn-outline-primary btn-sm">alex_dev</a>
-                    <a href="ask.html" class="btn btn-success btn-sm">+ Вопрос</a>
+                    <a href="{% url 'core:profile' %}" class="btn btn-outline-primary btn-sm">alex_dev</a>
+                    <a href="{% url 'questions:ask' %}" class="btn btn-success btn-sm">+ Вопрос</a>
                 </div>
 
             </div>
@@ -71,13 +72,13 @@
             <div class="card-body">
 
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h1 class="h3 mb-0">Как подключить Bootstrap локально?</h1>
+                    <h1 class="h3 mb-0">Как подключить Bootstrap локально? {{question_num}}</h1>
                     <span class="badge bg-success">3 ответа</span>
                 </div>
 
                 <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
                     <div class="avatar-placeholder rounded-circle" style="width: 32px; height: 32px;">AD</div>
-                    <a href="profile.html" class="text-decoration-none text-dark fw-medium">
+                    <a href="{% url 'core:profile' %}" class="text-decoration-none text-dark fw-medium">
                         alex_dev
                     </a>
                     <span>•</span>
@@ -95,14 +96,14 @@
                 </div>
 
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                    <a href="#" class="badge bg-secondary text-decoration-none hover-bg-dark">#bootstrap</a>
-                    <a href="#" class="badge bg-secondary text-decoration-none hover-bg-dark">#css</a>
-                    <a href="#" class="badge bg-secondary text-decoration-none hover-bg-dark">#html</a>
+                    <a href="{% url 'questions:tag' 'bootstrap' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#bootstrap</a>
+                    <a href="{% url 'questions:tag' 'css' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#css</a>
+                    <a href="{% url 'questions:tag' 'html' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#html</a>
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" disabled>
-                        <img src="static/img/like_icon.png" alt="Лайк" width="20" height="14">
+                        <img src="{% static 'questions/img/like_icon.png' %}" alt="Лайк" width="20" height="14">
                         <span>24</span>
                     </button>
                 </div>
@@ -112,7 +113,7 @@
 
 
         <section class="mb-4">
-            <h2 class="h4 mb-3">Ответы (3)</h2>
+            <h2 class="h4 mb-3">Ответы ({{question}})</h2>
             <article class="card shadow-sm mb-3 border-success border-2">
                 <div class="card-body">
 
@@ -120,7 +121,7 @@
                         <div class="d-flex align-items-center gap-2">
                             <div class="avatar-placeholder rounded-circle"
                                 style="width: 28px; height: 28px; font-size: 0.8rem;">MW</div>
-                            <a href="profile.html" class="text-decoration-none text-dark fw-medium">
+                            <a href="{% url 'core:profile' %}" class="text-decoration-none text-dark fw-medium">
                                 maria_web
                             </a>
                             <span class="text-muted small">•</span>
@@ -145,7 +146,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2">
                             <button class="btn btn-sm btn-primary d-flex align-items-center gap-1" disabled>
-                                <img src="static/img/like_icon.png" alt="Лайк" width="20" height="14">
+                                <img src="{% static 'questions/img/like_icon.png' %}" alt="Лайк" width="20" height="14">
                                 <span>18</span>
                             </button>
                         </div>
@@ -153,103 +154,12 @@
                 </div>
             </article>
 
-            <article class="card shadow-sm mb-3">
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="avatar-placeholder rounded-circle"
-                                style="width: 28px; height: 28px; font-size: 0.8rem;">IV</div>
-                            <a href="profile.html" class="text-decoration-none text-dark fw-medium">
-                                ivan_vk
-                            </a>
-                            <span class="text-muted small">•</span>
-                            <time datetime="2026-03-10T16:45:00" class="text-muted small">
-                                10.03.2026 16:45
-                            </time>
-                        </div>
-                    </div>
-
-                    <div class="answer-text mb-3">
-                        <p class="card-text mb-0">
-                            Проверь, что в пути нет лишних пробелов или очепяток.
-                        </p>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" disabled>
-                                <img src="static/img/like_icon.png" alt="Лайк" width="20" height="14">
-                                <span>5</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </article>
-
-            <article class="card shadow-sm mb-3">
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="avatar-placeholder rounded-circle"
-                                style="width: 28px; height: 28px; font-size: 0.8rem;">UU</div>
-                            <a href="profile.html" class="text-decoration-none text-dark fw-medium">
-                                unknown_user
-                            </a>
-                            <span class="text-muted small">•</span>
-                            <time datetime="2026-03-11T09:10:00" class="text-muted small">
-                                11.03.2026 09:10
-                            </time>
-                        </div>
-                    </div>
-
-                    <div class="answer-text mb-3">
-                        <p class="card-text mb-0">
-                            Не знаю что написать, идеи закончились
-                        </p>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" disabled>
-                                <img src="static/img/like_icon.png" alt="Лайк" width="20" height="14">
-                                <span>0</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </article>
+            {% for answer in answers %}
+                {% include "questions/partials/answer_card.html" %}
+            {% endfor %}
         </section>
 
-
-        <nav aria-label="Пагинация ответов" class="mb-4">
-            <ul class="pagination justify-content-center">
-
-                <li class="page-item">
-                    <a class="page-link" href="#" aria-label="Первая">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-
-                <li class="page-item active" aria-current="page">
-                    <span class="page-link">1</span>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="#">2</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="#">3</a>
-                </li>
-
-                <li class="page-item">
-                    <a class="page-link" href="#" aria-label="Последняя">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
+        {% include "questions/partials/pagination.html" %}
 
         <section id="answer-form" class="mb-5">
             <h2 class="h4 mb-3">Ваш ответ</h2>
@@ -266,13 +176,9 @@
         </section>
     </main>
 
-    <footer class="bg-dark text-light py-3 mt-auto">
-        <div class="container text-center">
-            <small>&copy; 2026 ItProger Forum</small>
-        </div>
-    </footer>
+    {% include "questions/partials/footer.html" %}
 
-    <script src="static/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
 
 </body>
 </html>

@@ -55,7 +55,10 @@ ROOT_URLCONF = 'application.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "questions" / "templates"],
+        'DIRS': [
+            BASE_DIR / "questions" / "templates",
+            BASE_DIR / "core" / "templates"
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -120,5 +123,6 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 STATICFILES_DIRS = [
-    BASE_DIR / "questions" / "static"
+    BASE_DIR / "questions" / "static",
+    BASE_DIR / "core" / "static"
 ]

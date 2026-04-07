@@ -17,7 +17,7 @@
         <div class="container">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
 
-                <a href="base.html" class="header-logo text-decoration-none d-flex align-items-center gap-2">
+                <a href="{% url 'questions:index' %}" class="header-logo text-decoration-none d-flex align-items-center gap-2">
                     <!-- <img src="static/img/icon" alt="Logo" width="32" height="32"> -->
                     <span class="fs-5 fw-bold text-dark">ItProger Forum</span>
                 </a>
@@ -28,9 +28,9 @@
                 </form>
 
                 <div class="header-actions d-flex align-items-center gap-2">
-                    <a href="login.html" class="btn btn-outline-secondary btn-sm">Войти</a>
-                    <a href="signup.html" class="btn btn-primary btn-sm">Регистрация</a>
-                    <a href="ask.html" class="btn btn-success btn-sm">+ Вопрос</a>
+                    <a href="{% url 'core:login' %}" class="btn btn-outline-secondary btn-sm">Войти</a>
+                    <a href="{% url 'core:signup' %}" class="btn btn-primary btn-sm">Регистрация</a>
+                    <a href="{% url 'questions:ask' %}" class="btn btn-success btn-sm">+ Вопрос</a>
                 </div>
             </div>
         </div>
@@ -48,11 +48,9 @@
                     <div class="card-header fw-bold">Popular tags</div>
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-2">
-                            <a href="#" class="badge bg-secondary text-decoration-none">#python</a>
-                            <a href="#" class="badge bg-secondary text-decoration-none">#javascript</a>
-                            <a href="#" class="badge bg-secondary text-decoration-none">#css</a>
-                            <a href="#" class="badge bg-secondary text-decoration-none">#html</a>
-                            <a href="#" class="badge bg-secondary text-decoration-none">#bootstrap</a>
+                            {% for tag in tags %}
+                                <a href="{% url 'questions:tag' tag %}" class="badge bg-secondary text-decoration-none">#{{ tag }}</a>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -63,12 +61,12 @@
                         <ul class="list-unstyled mb-0">
                             <li class="d-flex align-items-center gap-2 py-1">
                                 <img src="{% static 'questions/img/kakoyto-avatar' %}" alt="" width="24" height="24" class="rounded-circle bg-secondary">
-                                <a href="profile.html" class="text-decoration-none">alex_dev</a>
+                                <a href="{% url 'core:profile' %}" class="text-decoration-none">alex_dev</a>
                                 <span class="text-muted small ms-auto">1.2k</span>
                             </li>
                             <li class="d-flex align-items-center gap-2 py-1">
                                 <img src="{% static 'questions/img/kakoyto-avatar' %}" alt="" width="24" height="24" class="rounded-circle bg-secondary">
-                                <a href="profile.html" class="text-decoration-none">maria_code</a>
+                                <a href="{% url 'core:profile' %}" class="text-decoration-none">maria_code</a>
                                 <span class="text-muted small ms-auto">980</span>
                             </li>
                         </ul>
@@ -76,61 +74,9 @@
                 </div>
             </aside>
         </div>
-
-        <nav aria-label="Пагинация вопросов" class="mb-4 mt-auto">
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Предыдущая">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">&laquo;</span>
-                    </li>
-                {% endif %}
-
-                {% for num in page_obj.paginator.page_range %}
-                    {% if num == page_obj.number %}
-                        <li class="page-item active" aria-current="page">
-                            <span class="page-link">{{ num }}</span>
-                        </li>
-                    {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                        </li>
-                    {% elif num == 1 or num == page_obj.paginator.num_pages %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                        </li>
-                    {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
-                        <li class="page-item disabled">
-                            <span class="page-link">…</span>
-                        </li>
-                    {% endif %}
-                {% endfor %}
-
-                {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Следующая">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">&raquo;</span>
-                    </li>
-                {% endif %}
-            </ul>
-        </nav>
     </main>
 
-    <footer class="bg-dark text-light py-3 mt-auto">
-        <div class="container text-center">
-            <small>&copy; 2026 ItProger Forum</small>
-        </div>
-    </footer>
+    {% include "questions/partials/footer.html" %}
 
     <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
 
