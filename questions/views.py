@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 QUESTIONS = [
     {
@@ -20,20 +20,19 @@ ANSWERS = [
 
 TAGS = ['python', 'javascript', 'css', 'html', 'bootstrap']
 
-def paginate(request, pagination_list, per_list=4):
-    if not pagination_list:
-        return Paginator([], per_list).get_page(1)
+def paginate(request, objects_list, per_page=4):
+    if not objects_list:
+        objects_list = []
+    
+    paginator = Paginator(objects_list, per_page)
+    page_number = request.GET.get("page")
     
     try:
-        per_list = int(per_list)
-        if per_list <= 0:
-            per_list = 4
-    except (ValueError, TypeError):
-        per_list = 4
-    
-    paginator = Paginator(pagination_list, per_list)
-    page_number = request.GET.get("page")
-    page_object = paginator.get_page(page_number)
+        page_object = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_object = paginator.page(1)
+    except EmptyPage:
+        page_object = paginator.page(paginator.num_pages)
     return page_object
 
 def index(request):
