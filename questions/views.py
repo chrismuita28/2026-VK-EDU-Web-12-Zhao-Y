@@ -21,8 +21,19 @@ ANSWERS = [
 TAGS = ['python', 'javascript', 'css', 'html', 'bootstrap']
 
 def paginate(request, pagination_list, per_list=4):
-    page = Paginator(pagination_list, per_list)
-    page_object = page.get_page(request.GET.get("page"))
+    if not pagination_list:
+        return Paginator([], per_list).get_page(1)
+    
+    try:
+        per_list = int(per_list)
+        if per_list <= 0:
+            per_list = 4
+    except (ValueError, TypeError):
+        per_list = 4
+    
+    paginator = Paginator(pagination_list, per_list)
+    page_number = request.GET.get("page")
+    page_object = paginator.get_page(page_number)
     return page_object
 
 def index(request):
