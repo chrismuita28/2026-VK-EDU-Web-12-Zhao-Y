@@ -1,0 +1,84 @@
+{% load static %}
+
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ItProger Forum</title>
+    <!-- <link rel="icon" href="static/img/icon" type="image/x-icon"> -->
+
+    <link href="{% static 'questions/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'questions/css/mystyle.css' %}" rel="stylesheet">
+</head>
+
+<body>
+    <header class="bg-light border-bottom py-3">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+
+                <a href="{% url 'questions:index' %}" class="header-logo text-decoration-none d-flex align-items-center gap-2">
+                    <!-- <img src="static/img/icon" alt="Logo" width="32" height="32"> -->
+                    <span class="fs-5 fw-bold text-dark">ItProger Forum</span>
+                </a>
+
+                <form class="header-search d-flex flex-grow-1" style="max-width: 400px;" role="search" action="#" method="get">
+                    <input class="form-control me-2" type="search" placeholder="Поиск..." aria-label="Search">
+                    <button class="btn btn-outline-secondary" type="submit">Найти</button>
+                </form>
+
+                <div class="header-actions d-flex align-items-center gap-2">
+                    <a href="{% url 'core:login' %}" class="btn btn-outline-secondary btn-sm">Войти</a>
+                    <a href="{% url 'core:signup' %}" class="btn btn-primary btn-sm">Регистрация</a>
+                    <a href="{% url 'questions:ask' %}" class="btn btn-success btn-sm">+ Вопрос</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-4">
+        <div class="row g-4">
+            <div class="col-lg-8 col-md-12">
+                {% block question_cards %}
+                {% endblock %}
+            </div>
+
+            <aside class="col-lg-4 col-md-12">
+                <div class="card">
+                    <div class="card-header fw-bold">Popular tags</div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for tag in tags %}
+                                <a href="{% url 'questions:tag' tag %}" class="badge bg-secondary text-decoration-none">#{{ tag }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header fw-bold">Best members</div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="d-flex align-items-center gap-2 py-1">
+                                <img src="{% static 'questions/img/kakoyto-avatar' %}" alt="" width="24" height="24" class="rounded-circle bg-secondary">
+                                <a href="{% url 'core:profile' %}" class="text-decoration-none">alex_dev</a>
+                                <span class="text-muted small ms-auto">1.2k</span>
+                            </li>
+                            <li class="d-flex align-items-center gap-2 py-1">
+                                <img src="{% static 'questions/img/kakoyto-avatar' %}" alt="" width="24" height="24" class="rounded-circle bg-secondary">
+                                <a href="{% url 'core:profile' %}" class="text-decoration-none">maria_code</a>
+                                <span class="text-muted small ms-auto">980</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    {% include "questions/partials/footer.html" %}
+
+    <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
+
+</body>
+</html>

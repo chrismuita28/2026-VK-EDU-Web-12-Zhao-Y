@@ -1,0 +1,118 @@
+{% load static %}
+
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Новый вопрос | ItProger Forum</title>
+    <!-- <link rel="icon" href="static/img/icon" type="image/x-icon"> -->
+
+    <link href="{% static 'questions/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'questions/css/mystyle.css' %}" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .form-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="bg-light border-bottom py-3">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="{% url 'questions:index' %}" class="text-decoration-none d-flex align-items-center gap-2">
+                    <!-- <link rel="icon" href="static/img/icon" type="image/x-icon"> -->
+                    <span class="fs-5 fw-bold text-dark">ItProger Forum</span>
+                </a>
+                <a href="{% url 'core:login' %}" class="btn btn-outline-secondary btn-sm">Войти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                <h1 class="h3 mb-4">Задать вопрос</h1>
+
+                <div class="mb-3">
+                    <label for="id_title" class="form-label fw-bold">
+                        Заголовок вопроса <span class="text-danger">*</span>
+                    </label>
+                    <input class="form-control" id="id_title" name="text" placeholder="Опишите проблему детально"
+                        maxlength="100" required></input>
+                    <div class="form-text">
+                        <span id="title-char-count">0 / 100</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_text" class="form-label fw-bold">
+                        Подробное описание <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" id="id_text" name="text" rows="8"
+                        placeholder="Опишите проблему детально" maxlength="5000" required></textarea>
+
+                    <div class="form-text">
+                        <span id="text-char-count">0 / 5000</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="id_tags" class="form-label fw-bold">
+                        Теги <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="id_tags" name="tags"
+                        placeholder="python, django, html (через запятую)" value="" maxlength="100">
+
+                    <div class="form-text">
+                        До 5 тегов, каждый максимум 10 символов. Разделяйте запятыми.
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a href="{% url 'questions:question' 1 %}" class="btn btn-primary btn-lg">
+                        Опубликовать вопрос
+                    </a>
+                    <a href="{% url 'questions:index' %}" class="btn btn-outline-secondary btn-lg">
+                        Отмена
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include "questions/partials/footer.html" %}
+
+    <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
+
+    <script>
+        const titleField = document.getElementById('id_title');
+        const titleCount = document.getElementById('title-char-count');
+
+        const textField = document.getElementById('id_text');
+        const textCount = document.getElementById('text-char-count');
+
+        function updateCounter(field, counter, max) {
+            const current = field.value.length;
+            counter.textContent = `${current} / ${max}`;
+        }
+
+        titleField.addEventListener('input', function () {
+            updateCounter(titleField, titleCount, 100);
+        });
+
+        textField.addEventListener('input', function () {
+            updateCounter(textField, textCount, 5000);
+        });
+    </script>
+
+</body>
+</html>
