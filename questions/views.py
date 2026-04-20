@@ -1,24 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-
-QUESTIONS = [
-    {
-        "id": i,
-        "title": i,
-        "text": f"TEXT {i}",
-    }
-    for i in range(30)
-]
-
-ANSWERS = [
-    {
-        "user": i,
-        "text": f"TEXT {i}",
-    }
-    for i in range(10)
-]
-
-TAGS = ['python', 'javascript', 'css', 'html', 'bootstrap']
+from django.db.models import Count
+from questions.models import Question, Tag, QuestionLike
 
 def paginate(request, objects_list, per_page=4):
     if not objects_list:
@@ -35,21 +18,41 @@ def paginate(request, objects_list, per_page=4):
         page_object = paginator.page(paginator.num_pages)
     return page_object
 
+def _get_tags():
+    return {"tags": Tag.objects.all().order_by("-name")}
+
+def _render_question_list(request, queryset, template_name):
+    page_object = paginate(request, queryset)
+    context = {
+        **_get_tags(),
+        "questions": page_object.object_list,
+        "page_obj": page_object
+    }
+    return render(request, template_name, context)
+
 def index(request):
-    page_object = paginate(request, QUESTIONS)
-    return render(request, "questions/index.html", context={"questions": page_object.object_list, "page_obj": page_object, "tags": TAGS})
+    return _render_question_list(request, Question.objects.new(), "questions/index.html")
 
 def hot(request):
-    page_object = paginate(request, QUESTIONS)
-    return render(request, "questions/hot.html", context={"questions": page_object.object_list, "page_obj": page_object, "tags": TAGS})
+    return _render_question_list(request, Question.objects.hot(), "questions/hot.html")
 
 def tag(request, tag_name):
-    page_object = paginate(request, QUESTIONS)
-    return render(request, "questions/tag.html", context={"questions": page_object.object_list, "page_obj": page_object, "tag_name": tag_name, "tags": TAGS})
+    tag = get_object_or_404(Tag, name=tag_name)
+    return _render_question_list(request, Question.objects.by_tag(tag), "qustions/tag.html")
 
-def question(request, question_num):
-    page_object = paginate(request, ANSWERS)
-    return render(request, "questions/question.html", context={"answers": page_object.object_list, "page_obj": page_object, "question_num": question_num, "tags": TAGS})
+def question(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    answers = question.get_best_answers()
+    page_object = paginate(request, answers)
+    context = {
+        "title": question.title,
+        "text": question.text,
+        "author": question.author,
+        "date": question.created_at,
+        "answers": page_object.object_list,
+        "page_obj": page_object
+    }
+    return render(request, "questions/question.html", context)
 
 def ask(request):
     return render(request, "questions/ask.html")
