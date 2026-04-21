@@ -58,18 +58,12 @@
                 <div class="card">
                     <div class="card-header fw-bold">Best members</div>
                     <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            <li class="d-flex align-items-center gap-2 py-1">
-                                <img src="{% static 'questions/img/kakoyto-avatar' %}" alt="" width="24" height="24" class="rounded-circle bg-secondary">
-                                <a href="{% url 'core:profile' %}" class="text-decoration-none">alex_dev</a>
-                                <span class="text-muted small ms-auto">1.2k</span>
-                            </li>
-                            <li class="d-flex align-items-center gap-2 py-1">
-                                <img src="{% static 'questions/img/kakoyto-avatar' %}" alt="" width="24" height="24" class="rounded-circle bg-secondary">
-                                <a href="{% url 'core:profile' %}" class="text-decoration-none">maria_code</a>
-                                <span class="text-muted small ms-auto">980</span>
-                            </li>
-                        </ul>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for profile in profiles %}
+                                {% comment %} <img src="{% static 'questions/img/kakoyto-avatar' %}" alt="" width="24" height="24" class="rounded-circle bg-secondary"> {% endcomment %}
+                                <a href="{% url 'core:profile' %}" class="badge bg-secondary text-decoration-none">{{ profile.user }}</a>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </aside>

@@ -8,18 +8,18 @@
                 <div class="avatar-placeholder rounded-circle"
                     style="width: 28px; height: 28px; font-size: 0.8rem;">IV</div>
                 <a href="profile.html" class="text-decoration-none text-dark fw-medium">
-                    ivan_vk {{answer.user}}
+                    {{ answer.author }}
                 </a>
                 <span class="text-muted small">•</span>
                 <time datetime="2026-03-10T16:45:00" class="text-muted small">
-                    10.03.2026 16:45
+                    {{ answer.created_at }}
                 </time>
             </div>
         </div>
 
         <div class="answer-text mb-3">
             <p class="card-text mb-0">
-                Проверь, что в пути нет лишних пробелов или очепяток. {{answer.text}}
+                {{ answer.text }}
             </p>
         </div>
 
@@ -27,7 +27,7 @@
             <div class="d-flex align-items-center gap-2">
                 <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" disabled>
                     <img src="{% static 'questions/img/like_icon.png' %}" alt="Лайк" width="20" height="14">
-                    <span>5</span>
+                    <span>{{ answer.likes_count }}</span>
                 </button>
             </div>
         </div>

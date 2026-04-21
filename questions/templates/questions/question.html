@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Как подключить Bootstrap локально? | ItProger Forum</title>
+    <title>{{ question.title }} | ItProger Forum</title>
     <!-- <link rel="icon" href="static/img/favicon.ico" type="image/x-icon"> -->
 
     <link href="{% static 'questions/css/bootstrap.min.css' %}" rel="stylesheet">
@@ -72,39 +72,41 @@
             <div class="card-body">
 
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h1 class="h3 mb-0">Как подключить Bootstrap локально? {{question_num}}</h1>
-                    <span class="badge bg-success">3 ответа</span>
+                    <h1 class="h3 mb-0">{{ question.title }}</h1>
+                    <span class="badge bg-success">{{ question.answers_count }} ответов</span>
                 </div>
 
                 <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
-                    <div class="avatar-placeholder rounded-circle" style="width: 32px; height: 32px;">AD</div>
+                    <div class="avatar-placeholder rounded-circle" style="width: 32px; height: 32px;">Avatar</div>
                     <a href="{% url 'core:profile' %}" class="text-decoration-none text-dark fw-medium">
-                        alex_dev
+                        {{ question.author }}
                     </a>
                     <span>•</span>
                     <time datetime="2026-03-10T14:30:00">
-                        10.03.2026 14:30
+                        {{ question.created_at }}
                     </time>
                 </div>
 
                 <div class="question-text mb-3">
                     <p class="card-text">
-                        Привет! Я пытаюсь подключить Bootstrap к своему проекту без использования CDN.
-                        Скачал файлы, положил в папку static, но стили не применяются.
-                        Подскажите, в чём может быть проблема? Может, пути неправильно указал?
+                        {{ question.text }}
                     </p>
                 </div>
 
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                    <a href="{% url 'questions:tag' 'bootstrap' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#bootstrap</a>
-                    <a href="{% url 'questions:tag' 'css' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#css</a>
-                    <a href="{% url 'questions:tag' 'html' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#html</a>
+                    {% for tag in question.tags.all %}
+                        <a href="{% url 'questions:tag' 'bootstrap' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">
+                            {{ tag }}
+                        </a>
+                    {% endfor %}
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" disabled>
                         <img src="{% static 'questions/img/like_icon.png' %}" alt="Лайк" width="20" height="14">
-                        <span>24</span>
+                        <span>
+                            {{ question.likes_count }}
+                        </span>
                     </button>
                 </div>
 
@@ -113,8 +115,8 @@
 
 
         <section class="mb-4">
-            <h2 class="h4 mb-3">Ответы ({{question}})</h2>
-            <article class="card shadow-sm mb-3 border-success border-2">
+            <h2 class="h4 mb-3">Ответы ({{ question.answers_count }})</h2>
+            {% comment %} <article class="card shadow-sm mb-3 border-success border-2">
                 <div class="card-body">
 
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -152,7 +154,7 @@
                         </div>
                     </div>
                 </div>
-            </article>
+            </article> {% endcomment %}
 
             {% for answer in answers %}
                 {% include "questions/partials/answer_card.html" %}

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 class QuestionManager(models.Manager):
     def _optimized(self):
-        return self.select_related("author").prefetch_related("tags")
+        return self.select_related("author").prefetch_related("tags").annotate(likes_count=Count("likes"))
 
     def new(self):
         return self._optimized().order_by("-created_at")
@@ -59,7 +59,7 @@ class Question(models.Model):
         return self.title
     
     def get_best_answers(self):
-        return self.answers.select_related("author").order_by("-is_correct", "-created_at")
+        return self.answers.select_related("author").order_by("is_correct", "-created_at")
     
 class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers", verbose_name="Вопрос")
