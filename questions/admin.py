@@ -80,6 +80,6 @@ class AnswerLikeAdmin(admin.ModelAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ["user", "bio"]
-    search_fields = ["user__username", "bio"]
+    list_display = ["nickname", "bio"]
+    search_fields = ["nickname", "bio"]
     raw_id_fields = ["user"]

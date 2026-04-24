@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 if not os.getenv("DB_HOST"):
     try:
         from dotenv import load_dotenv
-        load_dotenv(".env.local")  # Убрали override=True!
+        load_dotenv(".env.local")
     except ImportError:
         pass
 

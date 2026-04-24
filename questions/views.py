@@ -20,7 +20,7 @@ def paginate(request, objects_list, per_page=4):
     return page_object
 
 def _get_profiles():
-    return {"profiles": Profile.objects.all().order_by("user")[:20]}
+    return {"profiles": Profile.objects.all().order_by("nickname")[:20]}
 
 def _get_tags():
     return {"tags": Tag.objects.all().order_by("name")[:20]}

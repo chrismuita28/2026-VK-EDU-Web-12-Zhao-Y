@@ -79,7 +79,7 @@
                 <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
                     <div class="avatar-placeholder rounded-circle" style="width: 32px; height: 32px;">Avatar</div>
                     <a href="{% url 'core:profile' %}" class="text-decoration-none text-dark fw-medium">
-                        {{ question.author }}
+                        {{ question.author.profile.display_name }}
                     </a>
                     <span>•</span>
                     <time datetime="2026-03-10T14:30:00">

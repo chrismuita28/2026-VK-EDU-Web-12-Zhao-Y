@@ -12,10 +12,11 @@ class QuestionManager(models.Manager):
         return self._optimized().order_by("-created_at")
 
     def hot(self):
-        return self._optimized().annotate(likes_count=Count("likes")).order_by("-likes_count")
+        return self._optimized().order_by("-likes_count")
     
     def by_tag(self, tag):
         return self._optimized().filter(tags=tag).order_by("-created_at")
+
 
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name="Название тега")
@@ -26,10 +27,14 @@ class Tag(models.Model):
 
     def __str__(self) -> str:
         return self.name
-    
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile", verbose_name="Пользователь")
+    nickname = models.CharField(max_length=50, unique=True, blank=True, verbose_name="Никнейм")
     bio = models.CharField(max_length=500, blank=True, verbose_name="О себе")
+    # avatar = models.ImageField(blank=True, null=True, verbose_name="Аватар")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации")
 
     class Meta:
         verbose_name = "Профиль"
@@ -38,6 +43,16 @@ class Profile(models.Model):
     def __str__(self) -> str:
         return f"Профиль {self.user.username}"
     
+    @property
+    def display_name(self):
+        return self.nickname or self.user.username
+    
+    def save(self, *args, **kwargs):
+        if not self.nickname and self.user:
+            self.nickname = self.user.username
+        super().save(*args, **kwargs)
+
+
 class Question(models.Model):
     title = models.CharField(max_length=200, verbose_name="Заголовок")
     text = models.TextField(verbose_name="Текст вопроса")
@@ -60,7 +75,8 @@ class Question(models.Model):
     
     def get_best_answers(self):
         return self.answers.select_related("author").order_by("is_correct", "-created_at")
-    
+
+
 class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers", verbose_name="Вопрос")
     text = models.TextField(verbose_name="Текст ответа")
@@ -74,7 +90,8 @@ class Answer(models.Model):
 
     def __str__(self):
         return f"Ответ на '{self.question.title}' от {self.author}"
-    
+
+
 class QuestionLike(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='question_likes', verbose_name="Пользователь")
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="likes", verbose_name="Вопрос")
@@ -90,6 +107,7 @@ class QuestionLike(models.Model):
 
     def __str__(self):
         return f"Лайк от {self.user} к {self.question}"
+
 
 class AnswerLike(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="answer_likes", verbose_name="Пользователь")

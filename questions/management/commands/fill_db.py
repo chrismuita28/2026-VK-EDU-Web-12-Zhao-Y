@@ -31,7 +31,15 @@ class Command(BaseCommand):
 
         # 2. Профили
         self.stdout.write('2/7. Генерация профилей...')
-        profiles = [Profile(user_id=uid, bio=fake.text(max_nb_chars=250)) for uid in user_ids]
+        user_usernames = {u.pk: u.username for u in User.objects.filter(pk__in=user_ids).only('pk', 'username')}
+        profiles = [
+            Profile(
+                user_id=uid, 
+                nickname=user_usernames.get(uid, f'user_{uid}'),
+                bio=fake.text(max_nb_chars=250)
+            ) 
+            for uid in user_ids
+        ]
         Profile.objects.bulk_create(profiles, batch_size=BATCH_SIZE)
         self.stdout.write(f'Создано {len(profiles)} профилей')
 
