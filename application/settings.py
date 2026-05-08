@@ -12,14 +12,21 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv
+import environ
 
-if not os.getenv("DB_HOST"):
-    try:
-        from dotenv import load_dotenv
-        load_dotenv(".env.local")
-    except ImportError:
-        pass
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env = environ.Env()
+
+django_env = os.environ.get('DJANGO_ENV', 'local')
+env_file_path = os.path.join(BASE_DIR, f'.env.{django_env}')
+
+if os.path.exists(env_file_path):
+    environ.Env.read_env(env_file_path)
+else:
+    raise FileNotFoundError(
+        f"Не найден файл конфигурации {os.path.basename(env_file_path)} в {BASE_DIR}. "
+        f"Проверьте переменную DJANGO_ENV={django_env}"
+    )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
