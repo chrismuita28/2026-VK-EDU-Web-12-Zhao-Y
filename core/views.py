@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from questions.models import Profile
 from django.db.models import Count
-import uuid
+from django.utils.http import url_has_allowed_host_and_scheme
 
 User = get_user_model()
 
@@ -28,16 +28,12 @@ def profile(request, nickname=None):
         answers_count=Count('answers'), likes_count=Count('likes')).order_by('-created_at')
     answers = user.answers.select_related('question', 'author').order_by('-created_at')
     
-    context = {
-        "profile_user": user,
-        "profile": profile,
-        "questions": questions,
-        "answers": answers,
-        "is_own_profile": is_own_profile,
-    }
+    context = {"profile_user": user, "profile": profile, "questions": questions, "answers": answers, "is_own_profile": is_own_profile}
     return render(request, 'core/profile.html', context)
 
+
 def user_login(request):
+    next_url = request.GET.get("next")
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -46,37 +42,27 @@ def user_login(request):
             
             if not form.cleaned_data.get("remember"):
                 request.session.set_expiry(0)
-                
+            
+            if next_url and url_has_allowed_host_and_scheme(url=next_url, allowed_hosts={request.get_host()},
+                                                            require_https=request.is_secure()):
+                return redirect(next_url)
             return redirect("questions:index")
     else:
         form = LoginForm()
-
-    return render(request, "core/login.html", context={"form": form})
+    return render(request, "core/login.html", context={"form": form, "next": next_url})
 
 
 def signup(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
-            nickname = form.cleaned_data['nickname']
-            password = form.cleaned_data['password1']
-            tech_username = f"user_{email.split('@')[0]}_{uuid.uuid4().hex[:6]}"
-            
-            user = User.objects.create_user(
-                email=email,
-                username=tech_username,
-                password=password,
-                is_active=True
-            )
-            
-            Profile.objects.create(user=user, nickname=nickname)
+            user = form.save()
             login(request, user)
             return redirect('questions:index')
     else:
         form = SignupForm()
-        
     return render(request, 'core/signup.html', {'form': form})
+
 
 def user_logout(request):
     logout(request)

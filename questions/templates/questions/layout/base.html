@@ -65,8 +65,7 @@
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-2">
                             {% for profile in profiles %}
-                                {% comment %} <img src="{% static 'questions/img/kakoyto-avatar' %}" alt="" width="24" height="24" class="rounded-circle bg-secondary"> {% endcomment %}
-                                <a href="{% url 'core:profile' %}" class="badge bg-secondary text-decoration-none">{{ profile.nickname }}</a>
+                                <a href="{% url 'core:profile_by_nickname' profile.nickname %}" class="badge bg-secondary text-decoration-none">{{ profile.nickname }}</a>
                             {% endfor %}
                         </div>
                     </div>

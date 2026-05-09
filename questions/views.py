@@ -1,10 +1,12 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db import transaction
 from django.db.models import Count
-from questions.models import Question, Tag, Profile
+from questions.models import Question, Tag, Profile, Answer
 from typing import TYPE_CHECKING
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
+from questions.forms import AskForm, AnswerForm
 
 def paginate(request, objects_list, per_page=4):
     if not objects_list:
@@ -39,7 +41,7 @@ def _render_question_list(request, queryset, template_name, extra_context=None):
         context.update(extra_context)
     return render(request, template_name, context)
 
-@login_required(login_url=reverse_lazy("core:login"))
+
 def index(request):
     return _render_question_list(request, Question.objects.new(), "questions/index.html")
 
@@ -50,18 +52,40 @@ def tag(request, tag_name):
     tag = get_object_or_404(Tag, name=tag_name)
     return _render_question_list(request, Question.objects.by_tag(tag), "questions/tag.html", {"tag": tag})
 
+
 def question(request, question_id):
-    question = get_object_or_404(Question.objects.annotate(likes_count=Count("likes", distinct=True), answers_count=Count("answers", distinct=True)), pk=question_id)
-    if TYPE_CHECKING:
-        question: "Question"
-    answers = (question.answers.select_related('author').annotate(likes_count=Count('likes')).order_by('-is_correct', "-likes_count", '-created_at'))
-    page_object = paginate(request, answers)
+    question_obj = get_object_or_404(Question.objects.annotate(
+        likes_count=Count("likes", distinct=True), answers_count=Count("answers", distinct=True)), pk=question_id)
+
+    if request.method == 'POST':
+        form = AnswerForm(request.POST)
+        if form.is_valid():
+            answer = form.save(question=question_obj, author=request.user)
+            return redirect(f'{request.path}?new_answer={answer.pk}#answer-{answer.pk}')
+    else:
+        form = AnswerForm()
+
+    answers_qs = question_obj.answers.select_related('author').annotate(
+        likes_count=Count('likes')).order_by('-is_correct', "-likes_count", '-created_at')
+    
+    page_object = paginate(request, answers_qs)
     context = {
-        "question": question,
+        "question": question_obj,
         "answers": page_object.object_list,
-        "page_obj": page_object
+        "page_obj": page_object,
+        "form": form,
+        "new_answer_id": request.GET.get('new_answer'),
     }
     return render(request, "questions/question.html", context)
 
+
+@login_required(login_url=reverse_lazy("core:login"))
 def ask(request):
-    return render(request, "questions/ask.html")
+    if request.method == 'POST':
+        form = AskForm(request.POST)
+        if form.is_valid():
+            question = form.save(author=request.user)
+            return redirect('questions:question', question_id=question.id)
+    else:
+        form = AskForm()
+    return render(request, 'questions/ask.html', {'form': form})

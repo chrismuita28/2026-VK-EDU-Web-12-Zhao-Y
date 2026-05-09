@@ -2,6 +2,8 @@ from django import forms
 from django.contrib.auth import authenticate, get_user_model
 from django.core.exceptions import ValidationError
 from questions.models import Profile
+from django.contrib.auth.password_validation import validate_password
+import uuid
 
 User = get_user_model()
 
@@ -25,40 +27,17 @@ class LoginForm(forms.Form):
 
 
 class SignupForm(forms.Form):
-    email = forms.EmailField(
-        widget=forms.EmailInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'xixi@example.com',
-            'autocomplete': 'email',
-            'id': 'id_email'
-        })
-    )
-    nickname = forms.CharField(
-        max_length=50,
-        min_length=3,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Как к вам обращаться',
-            'autocomplete': 'username',
-            'id': 'id_nickname'
-        })
-    )
-    password1 = forms.CharField(
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'placeholder': '••••••••',
-            'autocomplete': 'new-password',
-            'id': 'id_password1'
-        })
-    )
-    password2 = forms.CharField(
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'placeholder': '••••••••',
-            'autocomplete': 'new-password',
-            'id': 'id_password2'
-        })
-    )
+    email = forms.EmailField(widget=forms.EmailInput(
+        attrs={'class': 'form-control', 'placeholder': 'xixi@example.com', 'autocomplete': 'email', 'id': 'id_email'}))
+    
+    nickname = forms.CharField(max_length=50, min_length=3, widget=forms.TextInput(
+        attrs={'class': 'form-control', 'placeholder': 'Как к вам обращаться', 'autocomplete': 'username', 'id': 'id_nickname'}))
+    
+    password1 = forms.CharField(widget=forms.PasswordInput(
+        attrs={'class': 'form-control', 'placeholder': '••••••••', 'autocomplete': 'new-password', 'id': 'id_password1'}))
+    
+    password2 = forms.CharField(widget=forms.PasswordInput(
+        attrs={'class': 'form-control', 'placeholder': '••••••••', 'autocomplete': 'new-password', 'id': 'id_password2'}))
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -79,7 +58,20 @@ class SignupForm(forms.Form):
         
         if p1 and p2 and p1 != p2:
             raise ValidationError('Пароли не совпадают')
-        if p1 and len(p1) < 8:
-            raise ValidationError('Пароль должен содержать минимум 8 символов')
+        if p1:
+            try:
+                validate_password(p1)
+            except ValidationError as e:
+                self.add_error('password1', e)
         return cleaned_data
+    
+    def save(self):
+        email = self.cleaned_data['email']
+        nickname = self.cleaned_data['nickname']
+        password = self.cleaned_data['password1']
+        tech_username = f"user_{email.split('@')[0]}_{uuid.uuid4().hex[:6]}"
+        
+        user = User.objects.create_user(email=email, username=tech_username, password=password, is_active=True)
+        Profile.objects.create(user=user, nickname=nickname)
+        return user
     
