@@ -1,11 +1,16 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from questions.models import Tag, Profile, Question, Answer, QuestionLike, AnswerLike
 
-admin.site.unregister(User)
+CustomUser = get_user_model()
 
-@admin.register(User)
+try:
+    admin.site.unregister(CustomUser)
+except admin.sites.NotRegistered:
+    pass
+
+@admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     class ProfileInline(admin.StackedInline):
         model = Profile
@@ -27,7 +32,7 @@ class TagAdmin(admin.ModelAdmin):
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ["title", "author", "created_at", "get_tags"]
     list_filter = ["created_at", "author", "tags"]
-    search_fields = ["title", "text", "author__username"]
+    search_fields = ["title", "text", "author__email"]
     raw_id_fields = ["author"]
     readonly_fields = ["created_at"]
     
@@ -52,7 +57,7 @@ class QuestionAdmin(admin.ModelAdmin):
 class AnswerAdmin(admin.ModelAdmin):
     list_display = ["question", "author", "is_correct", "created_at"]
     list_filter = ["is_correct", "created_at", "author"]
-    search_fields = ["text", "author__username", "question__title"]
+    search_fields = ["text", "author__email", "question__title"]
     raw_id_fields = ["question", "author"]
     readonly_fields = ["created_at"]
     list_select_related = ["question", "author"]
@@ -62,7 +67,7 @@ class AnswerAdmin(admin.ModelAdmin):
 class QuestionLikeAdmin(admin.ModelAdmin):
     list_display = ["user", "question", "created_at"]
     list_filter = ["created_at", "question"]
-    search_fields = ["user__username", "question__title"]
+    search_fields = ["user__email", "question__title"]
     raw_id_fields = ["user", "question"]
     readonly_fields = ["created_at"]
     list_select_related = ["user", "question"]
@@ -72,7 +77,7 @@ class QuestionLikeAdmin(admin.ModelAdmin):
 class AnswerLikeAdmin(admin.ModelAdmin):
     list_display = ["user", "answer", "created_at"]
     list_filter = ["created_at", "answer"]
-    search_fields = ["user__username", "answer__text"]
+    search_fields = ["user__email", "answer__text"]
     raw_id_fields = ["user", "answer"]
     readonly_fields = ["created_at"]
     list_select_related = ["user", "answer"]
@@ -80,6 +85,6 @@ class AnswerLikeAdmin(admin.ModelAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ["nickname", "bio"]
-    search_fields = ["nickname", "bio"]
+    list_display = ["user", "nickname", "bio"]
+    search_fields = ["nickname", "bio", "user__email"]
     raw_id_fields = ["user"]

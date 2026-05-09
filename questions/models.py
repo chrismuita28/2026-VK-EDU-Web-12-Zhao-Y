@@ -1,12 +1,13 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db.models import Count
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from typing import TYPE_CHECKING
 
 class QuestionManager(models.Manager):
     def _optimized(self):
-        return self.select_related("author").prefetch_related("tags").annotate(likes_count=Count("likes"))
+        return self.select_related("author").prefetch_related("tags").annotate(likes_count=Count("likes"), answers_count=Count("answers"))
 
     def new(self):
         return self._optimized().order_by("-created_at")
@@ -16,6 +17,59 @@ class QuestionManager(models.Manager):
     
     def by_tag(self, tag):
         return self._optimized().filter(tags=tag).order_by("-created_at")
+
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Email обязателен")
+        user = self.model(email=self.normalize_email(email), **extra_fields)
+        user.set_password(password)
+        user.save()
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        return self.create_user(email, password, **extra_fields)
+    
+
+class CustomUser(AbstractUser):
+    username = models.CharField(max_length=150, blank=True, null=True)
+    email = models.EmailField(unique=True, max_length=254)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+    objects: "CustomUserManager" = CustomUserManager()
+
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+
+    def __str__(self):
+        return self.email
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile", verbose_name="Пользователь")
+    nickname = models.CharField(max_length=50, unique=True, blank=True, verbose_name="Никнейм")
+    bio = models.CharField(max_length=500, blank=True, verbose_name="О себе")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации")
+
+    class Meta:
+        verbose_name = "Профиль"
+        verbose_name_plural = "Профили"
+
+    def __str__(self) -> str:
+        return f"Профиль {self.user.email}"
+    
+    @property
+    def display_name(self):
+        return self.nickname or (self.user.username or self.user.email)
+    
+    def save(self, *args, **kwargs):
+        if not self.nickname and self.user:
+            self.nickname = self.user.username or self.user.email
+        super().save(*args, **kwargs)
 
 
 class Tag(models.Model):
@@ -29,34 +83,10 @@ class Tag(models.Model):
         return self.name
 
 
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile", verbose_name="Пользователь")
-    nickname = models.CharField(max_length=50, unique=True, blank=True, verbose_name="Никнейм")
-    bio = models.CharField(max_length=500, blank=True, verbose_name="О себе")
-    # avatar = models.ImageField(blank=True, null=True, verbose_name="Аватар")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации")
-
-    class Meta:
-        verbose_name = "Профиль"
-        verbose_name_plural = "Профили"
-
-    def __str__(self) -> str:
-        return f"Профиль {self.user.username}"
-    
-    @property
-    def display_name(self):
-        return self.nickname or self.user.username
-    
-    def save(self, *args, **kwargs):
-        if not self.nickname and self.user:
-            self.nickname = self.user.username
-        super().save(*args, **kwargs)
-
-
 class Question(models.Model):
     title = models.CharField(max_length=200, verbose_name="Заголовок")
     text = models.TextField(verbose_name="Текст вопроса")
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="questions", verbose_name="Автор")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="questions", verbose_name="Автор")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     tags = models.ManyToManyField(Tag, related_name="questions", verbose_name="Теги")
 
@@ -80,7 +110,7 @@ class Question(models.Model):
 class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers", verbose_name="Вопрос")
     text = models.TextField(verbose_name="Текст ответа")
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="answers", verbose_name="Автор")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="answers", verbose_name="Автор")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     is_correct = models.BooleanField(default=False, verbose_name="Правильный ответ")
 
@@ -93,7 +123,7 @@ class Answer(models.Model):
 
 
 class QuestionLike(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='question_likes', verbose_name="Пользователь")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='question_likes', verbose_name="Пользователь")
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="likes", verbose_name="Вопрос")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата лайка")
 
@@ -110,7 +140,7 @@ class QuestionLike(models.Model):
 
 
 class AnswerLike(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="answer_likes", verbose_name="Пользователь")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="answer_likes", verbose_name="Пользователь")
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name="likes", verbose_name="Ответ")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата лайка")
 

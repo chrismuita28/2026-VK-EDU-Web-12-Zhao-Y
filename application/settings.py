@@ -149,3 +149,5 @@ STATICFILES_DIRS = [
     BASE_DIR / "questions" / "static",
     BASE_DIR / "core" / "static"
 ]
+
+AUTH_USER_MODEL = "questions.CustomUser"

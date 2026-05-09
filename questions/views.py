@@ -3,6 +3,8 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Count
 from questions.models import Question, Tag, Profile
 from typing import TYPE_CHECKING
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
 
 def paginate(request, objects_list, per_page=4):
     if not objects_list:
@@ -37,6 +39,7 @@ def _render_question_list(request, queryset, template_name, extra_context=None):
         context.update(extra_context)
     return render(request, template_name, context)
 
+@login_required(login_url=reverse_lazy("core:login"))
 def index(request):
     return _render_question_list(request, Question.objects.new(), "questions/index.html")
 

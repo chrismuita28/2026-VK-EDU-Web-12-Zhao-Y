@@ -5,9 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Профиль пользователя | ItProger Forum</title>
-    <!-- <link rel="icon" href="static/img/icon" type="image/x-icon"> -->
-
+    <title>Профиль {{ profile.display_name }} | ItProger Forum</title>
     <link href="{% static 'questions/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'questions/css/mystyle.css' %}" rel="stylesheet">
 </head>
@@ -17,12 +15,18 @@
         <div class="container">
             <div class="d-flex align-items-center justify-content-between">
                 <a href="{% url 'questions:index' %}" class="text-decoration-none d-flex align-items-center gap-2">
-                    <!-- <img src="static/img/icon" alt="Logo" width="32" height="32"> -->
                     <span class="fs-5 fw-bold text-dark">ItProger Forum</span>
                 </a>
+                
                 <div class="d-flex gap-2">
-                    <a href="{% url 'core:profile' %}" class="btn btn-outline-primary btn-sm">alex_dev</a>
-                    <a href="{% url 'questions:ask' %}" class="btn btn-success btn-sm">+ Вопрос</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'core:profile' %}" class="btn btn-outline-primary btn-sm">
+                            {{ user.profile.display_name|default:user.email }}
+                        </a>
+                        <a href="{% url 'questions:ask' %}" class="btn btn-success btn-sm">+ Вопрос</a>
+                    {% else %}
+                        <a href="{% url 'core:login' %}" class="btn btn-outline-secondary btn-sm">Войти</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -33,37 +37,39 @@
             <div class="col-lg-4 col-md-5">
                 <div class="card shadow-sm">
                     <div class="card-body text-center p-4">
-                        <div class="avatar-placeholder rounded-circle mb-3 mx-auto"
-                            style="width: 120px; height: 120px;">
-                            ALEX
+                        <div class="avatar-placeholder rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center fw-bold text-white"
+                            style="width: 120px; height: 120px; background-color: #6c757d; font-size: 2rem;">
+                            {{ profile.nickname|default:profile_user.email|slice:":2"|upper }}
                         </div>
 
-                        <h2 class="h4 mb-1">alex_dev</h2>
-                        <p class="text-muted mb-3">alex@example.com</p>
+                        <h2 class="h4 mb-1">{{ profile.display_name }}</h2>
+                        <p class="text-muted mb-3">{{ profile_user.email }}</p>
 
                         <div class="row g-1 mb-4 justify-content-center">
                             <div class="col-4">
                                 <div class="p-2 bg-light rounded">
-                                    <div class="fw-bold">12</div>
+                                    <div class="fw-bold">{{ questions.count }}</div>
                                     <div class="small text-muted">Вопросов</div>
                                 </div>
                             </div>
                             <div class="col-4">
                                 <div class="p-2 bg-light rounded">
-                                    <div class="fw-bold">45</div>
+                                    <div class="fw-bold">{{ answers.count }}</div>
                                     <div class="small text-muted">Ответов</div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-grid gap-2">
-                            <a href="#" class="btn btn-outline-primary">
-                                Редактировать профиль
-                            </a>
-                            <a href="#" class="btn btn-outline-secondary">
-                                Сменить пароль
-                            </a>
-                        </div>
+                        {% if is_own_profile %}
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'core:profile' %}" class="btn btn-outline-primary disabled">
+                                    Редактировать профиль (скоро)
+                                </a>
+                                <a href="#" class="btn btn-outline-secondary disabled">
+                                    Сменить пароль (скоро)
+                                </a>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -73,45 +79,41 @@
                         <ul class="list-unstyled mb-0">
                             <li class="d-flex justify-content-between py-2 border-bottom">
                                 <span class="text-muted">Дата регистрации</span>
-                                <span>16.01.2026</span>
+                                <span>{{ profile.created_at|date:"d.m.Y" }}</span>
                             </li>
                             <li class="d-flex justify-content-between py-2 border-bottom">
                                 <span class="text-muted">Последний вход</span>
-                                <span>14.03.2026 18:30</span>
+                                <span>{{ profile_user.last_login|date:"d.m.Y H:i"|default:"—" }}</span>
                             </li>
-                            <li class="d-flex justify-content-between py-2">
-                                <span class="text-muted">Город</span>
-                                <span>Москва</span>
+                            {% if profile.bio %}
+                            <li class="py-2">
+                                <span class="text-muted d-block mb-1">О себе:</span>
+                                <span class="fst-italic">{{ profile.bio }}</span>
                             </li>
+                            {% endif %}
                         </ul>
                     </div>
                 </div>
             </div>
 
             <div class="col-lg-8 col-md-7">
+                
                 <div class="card shadow-sm mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">Вопросы (12)</span>
-                        <a href="{% url 'questions:ask' %}" class="btn btn-sm btn-primary">+ Новый</a>
+                        <span class="fw-bold">Вопросы ({{ questions.count }})</span>
                     </div>
                     <div class="card-body p-0">
-
                         <div class="list-group list-group-flush">
                             {% for question in questions %}
                                 {% include "core/partials/question_card.html" %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm">
-                    <div class="card-header">
-                        <span class="fw-bold">Последние ответы (45)</span>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="list-group list-group-flush">
-                            {% for answer in answers %}
-                                {% include "core/partials/answer_card.html" %}
+                            {% empty %}
+                                <div class="p-4 text-center text-muted">
+                                    {% if is_own_profile %}
+                                        Вы еще не задали ни одного вопроса.
+                                    {% else %}
+                                        Пользователь еще не задавал вопросов.
+                                    {% endif %}
+                                </div>
                             {% endfor %}
                         </div>
                     </div>
@@ -121,8 +123,6 @@
     </main>
 
     {% include "core/partials/footer.html" %}
-
     <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
-
 </body>
 </html>

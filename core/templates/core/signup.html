@@ -31,55 +31,60 @@
                 <div class="card shadow-sm">
                     <div class="card-body p-4 p-md-5">
                         <h1 class="h3 text-center mb-4">Создать аккаунт</h1>
-
+                        <form method="post" action="{% url 'core:signup' %}">
+                            {% csrf_token %}
+                            
                             <div class="mb-3">
-                                <label for="id_email" class="form-label fw-bold">
+                                <label for="{{ form.email.id_for_label }}" class="form-label fw-bold">
                                     Email <span class="text-danger">*</span>
                                 </label>
-                                <input type="email" class="form-control" id="id_email" name="email"
-                                    placeholder="name@example.com" value="" autocomplete="email" maxlength="200"
-                                    required>
-
-                                <div class="form-text">
-                                    Используйте действующий email для подтверждения.
-                                </div>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Используйте действующий email для входа.</div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="id_username" class="form-label fw-bold">
-                                    Имя пользователя <span class="text-danger">*</span>
+                                <label for="{{ form.nickname.id_for_label }}" class="form-label fw-bold">
+                                    Никнейм <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control" id="id_username" name="username"
-                                    placeholder="Как к вам обращаться" value="" autocomplete="username" maxlength="50"
-                                    required>
-                                <div class="form-text">
-                                    3-50 символов. Только буквы, цифры и @/./+/-/_.
-                                </div>
+                                {{ form.nickname }}
+                                {% if form.nickname.errors %}
+                                    <div class="text-danger small">{{ form.nickname.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">3-50 символов. Это имя будет видно другим пользователям.</div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="id_password1" class="form-label fw-bold">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label fw-bold">
                                     Пароль <span class="text-danger">*</span>
                                 </label>
-                                <input type="password" class="form-control" id="id_password1" name="password1"
-                                    placeholder="••••••••" autocomplete="new-password" maxlength="50" required>
-
-                                <div class="form-text">
-                                    Минимум 8 символов. Не используйте простые пароли.
-                                </div>
+                                {{ form.password1 }}
+                                {% if form.password1.errors %}
+                                    <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Минимум 8 символов. Не используйте простые пароли.</div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="id_password2" class="form-label fw-bold">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label fw-bold">
                                     Подтвердите пароль <span class="text-danger">*</span>
                                 </label>
-                                <input type="password" class="form-control" id="id_password2" name="password2"
-                                    placeholder="••••••••" autocomplete="new-password" maxlength="50" required>
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}
+                                    <div class="text-danger small">{{ form.password2.errors.0 }}</div>
+                                {% endif %}
                             </div>
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">{{ form.non_field_errors.0 }}</div>
+                            {% endif %}
 
                             <button type="submit" class="btn btn-primary w-100 mb-3">
                                 Зарегистрироваться
                             </button>
+                        </form>
 
                         <div class="text-center">
                             <p class="mb-0 text-muted">
