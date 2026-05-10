@@ -83,8 +83,14 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
-                    <div class="avatar-placeholder rounded-circle" style="width: 32px; height: 32px;">Avatar</div>
-                    <a href="{% url 'core:profile' %}" class="text-decoration-none text-dark fw-medium">
+                    <div class="avatar-placeholder rounded-circle" style="width: 32px; height: 32px;">
+                        {% if user.profile.avatar %}
+                            <img src="{{ MEDIA_URL }}{{ user.avatar }}">
+                        {% else %}
+                            {{ question.author.profile.display_name|slice:":2"|upper }}
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'core:profile_by_nickname' question.author.profile.display_name %}" class="text-decoration-none text-dark fw-medium">
                         {{ question.author.profile.display_name }}
                     </a>
                     <span>•</span>
@@ -108,17 +114,16 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" disabled>
+                    <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 like-btn
+                        {% if user.is_authenticated and question.has_liked %}active-like{% endif %}"
+                        data-question-id="{{ question.id }}"
+                    >
                         <img src="{% static 'questions/img/like_icon.png' %}" alt="Лайк" width="20" height="14">
-                        <span>
-                            {{ question.likes_count }}
-                        </span>
+                        <span class="likes-count">{{ question.likes_count }}</span>
                     </button>
                 </div>
-
             </div>
         </article>
-
 
         <section class="mb-4">
             <h2 class="h4 mb-3">Ответы ({{ question.answers_count }})</h2>
@@ -161,6 +166,8 @@
     {% include "questions/partials/footer.html" %}
 
     <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'questions/js/jquery.min.js' %}"></script>
+    <script src="{% static 'questions/js/main.js' %}"></script>
 
 </body>
 </html>

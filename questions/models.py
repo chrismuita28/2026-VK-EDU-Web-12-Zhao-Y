@@ -1,22 +1,34 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-from django.db.models import Count
+from django.db.models import Count, OuterRef, Exists, Value, BooleanField
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from typing import TYPE_CHECKING
 
 class QuestionManager(models.Manager):
-    def _optimized(self):
-        return self.select_related("author").prefetch_related("tags").annotate(likes_count=Count("likes"), answers_count=Count("answers"))
+    def _optimized(self, user=None):
+        return self.select_related("author").prefetch_related("tags").annotate(
+            likes_count=Count("likes", distinct=True), answers_count=Count("answers", distinct=True))
 
-    def new(self):
-        return self._optimized().order_by("-created_at")
+    def new(self, user):
+        return self._optimized(user).order_by("-created_at")
 
-    def hot(self):
-        return self._optimized().order_by("-likes_count")
+    def hot(self, user):
+        return self._optimized(user).order_by("-likes_count")
     
-    def by_tag(self, tag):
-        return self._optimized().filter(tags=tag).order_by("-created_at")
+    def by_tag(self, tag, user):
+        return self._optimized(user).filter(tags=tag).order_by("-created_at")
+    
+    def _add_has_liked(self, queryset, user):
+        if user and user.is_authenticated:
+            from .models import QuestionLike
+            like_subquery = QuestionLike.objects.filter(
+                user=user,
+                question=OuterRef('pk')
+            )
+            return queryset.annotate(has_liked=Exists(like_subquery))
+        else:
+            return queryset.annotate(has_liked=Value(False, output_field=BooleanField()))
 
 
 class CustomUserManager(BaseUserManager):
@@ -53,6 +65,7 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile", verbose_name="Пользователь")
     nickname = models.CharField(max_length=50, unique=True, blank=True, verbose_name="Никнейм")
     bio = models.CharField(max_length=500, blank=True, verbose_name="О себе")
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name="Аватар")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации")
 
     class Meta:
@@ -64,12 +77,7 @@ class Profile(models.Model):
     
     @property
     def display_name(self):
-        return self.nickname or (self.user.username or self.user.email)
-    
-    def save(self, *args, **kwargs):
-        if not self.nickname and self.user:
-            self.nickname = self.user.username or self.user.email
-        super().save(*args, **kwargs)
+        return self.nickname or self.user.email or self.user.username
 
 
 class Tag(models.Model):
@@ -114,6 +122,9 @@ class Answer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     is_correct = models.BooleanField(default=False, verbose_name="Правильный ответ")
 
+    if TYPE_CHECKING:
+        likes: "models.Manager[AnswerLike]"
+
     class Meta:
         verbose_name = "Ответ"
         verbose_name_plural = "Ответы"
@@ -130,6 +141,8 @@ class QuestionLike(models.Model):
     class Meta:
         verbose_name = "Лайк к вопросу"
         verbose_name_plural = "Лайки к вопросам"
+        constraints = [models.UniqueConstraint(fields=['user', 'question'], name='unique_question_like')]
+        indexes = [models.Index(fields=['user', 'question'])]
 
     def clean(self):
         if QuestionLike.objects.filter(user=self.user, question=self.question).exists():
@@ -147,6 +160,8 @@ class AnswerLike(models.Model):
     class Meta:
         verbose_name = "Лайк к ответу"
         verbose_name_plural = "Лайки к ответам"
+        constraints = [models.UniqueConstraint(fields=['user', 'answer'], name='unique_answer_like')]
+        indexes = [models.Index(fields=['user', 'answer'])]
 
     def clean(self):
         if AnswerLike.objects.filter(user=self.user, answer=self.answer).exists():

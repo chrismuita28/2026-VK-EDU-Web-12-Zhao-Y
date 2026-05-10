@@ -45,3 +45,25 @@ main {
         justify-content: center;
     }
 }
+
+.like-btn.active-like {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+.like-btn.active-like img {
+    filter: brightness(0) invert(1) !important;
+    opacity: 1 !important;
+}
+
+.answer-like-btn.active-like {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+.answer-like-btn.active-like img {
+    filter: brightness(0) invert(1) !important;
+    opacity: 1 !important;
+}

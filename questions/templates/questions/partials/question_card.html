@@ -16,15 +16,15 @@
         </div>
         
         <div class="d-flex gap-2">
-            <a href="#" class="btn btn-sm btn-outline-primary">
+            <a href="{% url 'questions:question' question.id %}" class="btn btn-sm btn-outline-primary">
                 Ответить
             </a>
-            <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
+            <button 
+                class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 like-btn {% if user.is_authenticated and question.has_liked %}active-like{% endif %}"
+                data-question-id="{{ question.id }}"
+            >
                 <img src="{% static 'questions/img/like_icon.png' %}" alt="Лайк" width="20" height="14">
-                <span>{{ question.likes_count }}</span>
-            </button>
-            <button class="btn btn-sm btn-outline-secondary">
-                <img src="{% static 'questions/img/dislike_icon.png' %}" alt="Дизлайк" width="20" height="14">
+                <span class="likes-count">{{ question.likes_count }}</span>
             </button>
         </div>
     </div>

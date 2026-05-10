@@ -63,9 +63,19 @@
                 <div class="card">
                     <div class="card-header fw-bold">Best members</div>
                     <div class="card-body">
-                        <div class="d-flex flex-wrap gap-2">
+                        <div class="d-flex flex-column gap-2">
                             {% for profile in profiles %}
-                                <a href="{% url 'core:profile_by_nickname' profile.nickname %}" class="badge bg-secondary text-decoration-none">{{ profile.nickname }}</a>
+                                {% if profile.nickname %}
+                                    <a href="{% url 'core:profile_by_nickname' profile.nickname %}" class="badge bg-secondary text-decoration-none">
+                                        {{ profile.display_name }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small">
+                                        {{ profile.user.email }}
+                                    </span>
+                                {% endif %}    
+                            {% empty %}
+                                <span class="text-muted">Нет участников</span>
                             {% endfor %}
                         </div>
                     </div>
@@ -75,8 +85,9 @@
     </main>
 
     {% include "questions/partials/footer.html" %}
-
     <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'questions/js/jquery.min.js' %}"></script>
+    <script src="{% static 'questions/js/main.js' %}"></script>
 
 </body>
 </html>

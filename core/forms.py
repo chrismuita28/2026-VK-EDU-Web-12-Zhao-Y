@@ -75,3 +75,22 @@ class SignupForm(forms.Form):
         Profile.objects.create(user=user, nickname=nickname)
         return user
     
+
+class EditProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['nickname', 'avatar', 'bio']
+        widgets = {
+            'nickname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ваш никнейм'}),
+            'avatar': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Расскажите о себе'}),
+        }
+
+    def clean_nickname(self):
+        nickname = self.cleaned_data.get('nickname')
+        if not nickname:
+            raise ValidationError("Никнейм не может быть пустым")
+        if Profile.objects.filter(nickname=nickname).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('Этот никнейм уже занят')
+        return nickname
+    

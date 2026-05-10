@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, get_user_model, logout
-from core.forms import LoginForm, SignupForm
+from core.forms import LoginForm, SignupForm, EditProfileForm
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from questions.models import Profile
@@ -19,7 +19,7 @@ def profile(request, nickname=None):
             is_own_profile = True
     else:
         if not request.user.is_authenticated:
-            return redirect('core:login')
+            return redirect("core:login")
         user = request.user
         profile, _ = Profile.objects.get_or_create(user=user)
         is_own_profile = True
@@ -29,7 +29,7 @@ def profile(request, nickname=None):
     answers = user.answers.select_related('question', 'author').order_by('-created_at')
     
     context = {"profile_user": user, "profile": profile, "questions": questions, "answers": answers, "is_own_profile": is_own_profile}
-    return render(request, 'core/profile.html', context)
+    return render(request, "core/profile.html", context)
 
 
 def user_login(request):
@@ -66,4 +66,17 @@ def signup(request):
 
 def user_logout(request):
     logout(request)
-    return redirect('questions:index')
+    return redirect("questions:index")
+
+
+@login_required(login_url=reverse_lazy("core:login"))
+def edit_profile(request):
+    profile = request.user.profile
+    if request.method == "POST":
+        form = EditProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect("core:profile")
+    else:
+        form = EditProfileForm(instance=profile)
+    return render(request, "core/edit_profile.html", context={"form": form})

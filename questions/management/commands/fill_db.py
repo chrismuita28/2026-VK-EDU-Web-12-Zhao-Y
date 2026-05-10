@@ -16,158 +16,124 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         ratio = options['ratio']
         fake = Faker('ru_RU')
-        BATCH_SIZE = 10000
-
+        BATCH_SIZE = 1000
+        
         self.stdout.write(self.style.SUCCESS(f'Начало заполнения БД с коэффициентом: {ratio}'))
 
-        # 1. Пользователи + Профили
-        self.stdout.write('1/7. Генерация пользователей и профилей...')
+        # --- 1. Пользователи ---
+        self.stdout.write('1/6. Генерация пользователей...')
         hashed_pw = make_password('test123')
         
-        users = []
-        profiles = []
-        
-        generated_nicknames = [f"{fake.user_name()}_{i}" for i in range(ratio)]
+        users_to_create = []
+        unique_emails = []
         
         for i in range(1, ratio + 1):
             email = f'user{i}@example.com'
-            
-            user = User(
+            unique_emails.append(email)
+            users_to_create.append(User(
                 email=email,
-                username=f'tech_user_{i}',
+                username=f'tech_user_{i}_{fake.unique.word()}', # Уникальный username для безопасности
                 password=hashed_pw,
                 is_active=True
-            )
-            users.append(user)
+            ))
+        
+        # Создаем пользователей
+        User.objects.bulk_create(users_to_create, batch_size=BATCH_SIZE, ignore_conflicts=True)
+        
+        # Получаем реальные объекты из БД, чтобы знать их ID
+        created_users = User.objects.filter(email__in=unique_emails).order_by('id')
+        user_ids = list(created_users.values_list('id', flat=True))
+        
+        if not user_ids:
+            self.stdout.write(self.style.ERROR('Не удалось создать пользователей. Проверьте БД.'))
+            return
+
+        self.stdout.write(f'   Создано {len(user_ids)} пользователей.')
+
+        # --- 2. Профили ---
+        self.stdout.write('2/6. Генерация профилей...')
+        profiles_to_create = []
+        
+        # Генерируем уникальные никнеймы заранее
+        nicknames = [f"{fake.user_name()}_{i}" for i in range(len(user_ids))]
+        
+        for idx, uid in enumerate(user_ids):
+            profiles_to_create.append(Profile(
+                user_id=uid,
+                nickname=nicknames[idx],
+                bio=fake.text(max_nb_chars=200)
+            ))
             
-            profile = Profile(
-                user_id=None,
-                nickname=generated_nicknames[i-1],
-                bio=fake.text(max_nb_chars=250)
-            )
-            profiles.append(profile)
-        
-        User.objects.bulk_create(users, batch_size=BATCH_SIZE, ignore_conflicts=True)
-        
-        created_users = User.objects.filter(
-            email__in=[f'user{i}@example.com' for i in range(1, ratio + 1)]
-        ).order_by('id')
-        
-        user_ids = [u.pk for u in created_users]
-        
-        for idx, profile in enumerate(profiles):
-            if idx < len(user_ids):
-                profile.user_id = user_ids[idx]
-        
-        Profile.objects.bulk_create(profiles, batch_size=BATCH_SIZE, ignore_conflicts=True)
-        
-        self.stdout.write(f'Создано {len(user_ids)} пользователей с профилями')
+        Profile.objects.bulk_create(profiles_to_create, batch_size=BATCH_SIZE, ignore_conflicts=True)
+        self.stdout.write(f'   Создано {len(profiles_to_create)} профилей.')
 
-        # 2. Теги
-        self.stdout.write('2/7. Генерация тегов...')
-        tag_names = [f'tag_{i}_{fake.word()[:6]}' for i in range(1, ratio + 1)]
-        tags = [Tag(name=name) for name in tag_names]
-        Tag.objects.bulk_create(tags, batch_size=BATCH_SIZE, ignore_conflicts=True)
+        # --- 3. Теги ---
+        self.stdout.write('3/6. Генерация тегов...')
+        tag_count = min(ratio, 50) # Ограничим количество тегов, чтобы не было каши
+        tag_names = [f'tag_{fake.word()[:8]}' for _ in range(tag_count)]
         
+        tags_to_create = [Tag(name=name) for name in tag_names]
+        Tag.objects.bulk_create(tags_to_create, batch_size=BATCH_SIZE, ignore_conflicts=True)
+        
+        # Получаем ID созданных тегов
         tag_ids = list(Tag.objects.filter(name__in=tag_names).values_list('pk', flat=True))
-        self.stdout.write(f'Создано {len(tag_ids)} тегов')
+        self.stdout.write(f'   Создано {len(tag_ids)} тегов.')
 
-        # 3. Вопросы
-        questions_count = ratio * 10
-        self.stdout.write(f'3/7. Генерация {questions_count} вопросов...')
+        # --- 4. Вопросы ---
+        questions_count = ratio * 5
+        self.stdout.write(f'4/6. Генерация {questions_count} вопросов...')
         
-        created_questions = []
-        batch = []
+        questions_to_create = []
         for _ in range(questions_count):
-            batch.append(Question(
+            questions_to_create.append(Question(
                 title=fake.sentence(nb_words=6),
-                text=fake.text(max_nb_chars=500),
+                text=fake.paragraph(nb_sentences=3),
                 author_id=random.choice(user_ids)
             ))
-            if len(batch) >= BATCH_SIZE:
-                Question.objects.bulk_create(batch)
-                created_questions.extend(batch)
-                batch = []
-        if batch:
-            Question.objects.bulk_create(batch)
-            created_questions.extend(batch)
+            
+        Question.objects.bulk_create(questions_to_create, batch_size=BATCH_SIZE)
         
-        question_ids = [q.pk for q in created_questions if q.pk]
-        self.stdout.write(f'Создано {len(question_ids)} вопросов')
+        # Получаем ID созданных вопросов
+        question_ids = list(Question.objects.order_by('-id').values_list('pk', flat=True)[:questions_count])
+        self.stdout.write(f'   Создано {len(question_ids)} вопросов.')
 
-        # 4. Связь Вопрос-Тег (M2M)
-        self.stdout.write('4/7. Привязка тегов к вопросам...')
+        # --- 5. Связь Вопрос-Тег (M2M) ---
+        self.stdout.write('5/6. Привязка тегов к вопросам...')
         if tag_ids and question_ids:
             m2m_model = Question.tags.through
             m2m_batch = []
             
             for q_id in question_ids:
-                num_tags = random.randint(1, min(5, len(tag_ids)))
+                # Каждый вопрос получает от 1 до 3 тегов
+                num_tags = random.randint(1, min(3, len(tag_ids)))
                 selected_tags = random.sample(tag_ids, num_tags)
                 for t_id in selected_tags:
                     m2m_batch.append(m2m_model(question_id=q_id, tag_id=t_id))
-                    if len(m2m_batch) >= BATCH_SIZE:
-                        m2m_model.objects.bulk_create(m2m_batch, ignore_conflicts=True)
-                        m2m_batch = []
+                
+                if len(m2m_batch) >= BATCH_SIZE:
+                    m2m_model.objects.bulk_create(m2m_batch, ignore_conflicts=True)
+                    m2m_batch = []
+                    
             if m2m_batch:
                 m2m_model.objects.bulk_create(m2m_batch, ignore_conflicts=True)
         
-        self.stdout.write('Привязка тегов завершена')
+        self.stdout.write('   Привязка тегов завершена.')
 
-        # 5. Ответы
-        answers_count = ratio * 100
-        self.stdout.write(f'5/7. Генерация {answers_count} ответов...')
+        # --- 6. Ответы ---
+        answers_count = ratio * 10
+        self.stdout.write(f'6/6. Генерация {answers_count} ответов...')
         
-        created_answers = []
-        batch = []
+        answers_to_create = []
         for _ in range(answers_count):
-            batch.append(Answer(
+            answers_to_create.append(Answer(
                 question_id=random.choice(question_ids),
                 author_id=random.choice(user_ids),
-                text=fake.text(max_nb_chars=400),
-                is_correct=random.choices([True, False], weights=[5, 95])[0]
+                text=fake.paragraph(nb_sentences=2),
+                is_correct=random.choices([True, False], weights=[10, 90])[0]
             ))
-            if len(batch) >= BATCH_SIZE:
-                Answer.objects.bulk_create(batch)
-                created_answers.extend(batch)
-                batch = []
-        if batch:
-            Answer.objects.bulk_create(batch)
-            created_answers.extend(batch)
-        
-        answer_ids = [a.pk for a in created_answers if a.pk]
-        self.stdout.write(f'Создано {len(answer_ids)} ответов')
-
-        # 6. Лайки (Вопросы + Ответы)
-        likes_count = ratio * 100
-        self.stdout.write(f'6/7. Генерация {likes_count * 2} лайков...')
-
-        # Лайки вопросов
-        if user_ids and question_ids:
-            q_like_batch = []
-            for _ in range(likes_count):
-                q_like_batch.append(QuestionLike(
-                    user_id=random.choice(user_ids),
-                    question_id=random.choice(question_ids)
-                ))
-                if len(q_like_batch) >= BATCH_SIZE:
-                    QuestionLike.objects.bulk_create(q_like_batch, ignore_conflicts=True)
-                    q_like_batch = []
-            if q_like_batch:
-                QuestionLike.objects.bulk_create(q_like_batch, ignore_conflicts=True)
-
-        # Лайки ответов
-        if user_ids and answer_ids:
-            a_like_batch = []
-            for _ in range(likes_count):
-                a_like_batch.append(AnswerLike(
-                    user_id=random.choice(user_ids),
-                    answer_id=random.choice(answer_ids)
-                ))
-                if len(a_like_batch) >= BATCH_SIZE:
-                    AnswerLike.objects.bulk_create(a_like_batch, ignore_conflicts=True)
-                    a_like_batch = []
-            if a_like_batch:
-                AnswerLike.objects.bulk_create(a_like_batch, ignore_conflicts=True)
+            
+        Answer.objects.bulk_create(answers_to_create, batch_size=BATCH_SIZE)
+        self.stdout.write(f'   Создано {len(answers_to_create)} ответов.')
 
         self.stdout.write(self.style.SUCCESS('\nБаза данных успешно заполнена!'))
+        

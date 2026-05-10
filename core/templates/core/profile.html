@@ -21,7 +21,7 @@
                 <div class="d-flex gap-2">
                     {% if user.is_authenticated %}
                         <a href="{% url 'core:profile' %}" class="btn btn-outline-primary btn-sm">
-                            {{ user.profile.display_name|default:user.email }}
+                            {{ user.profile.display_name }}
                         </a>
                         <a href="{% url 'questions:ask' %}" class="btn btn-success btn-sm">+ Вопрос</a>
                     {% else %}
@@ -39,7 +39,11 @@
                     <div class="card-body text-center p-4">
                         <div class="avatar-placeholder rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center fw-bold text-white"
                             style="width: 120px; height: 120px; background-color: #6c757d; font-size: 2rem;">
-                            {{ profile.nickname|default:profile_user.email|slice:":2"|upper }}
+                            {% if user.profile.avatar %}
+                                <img src="{{ MEDIA_URL }}{{ user.avatar }}">
+                            {% else %}
+                                {{ profile.nickname|default:profile_user.email|slice:":2"|upper }}
+                            {% endif %}
                         </div>
 
                         <h2 class="h4 mb-1">{{ profile.display_name }}</h2>
@@ -62,8 +66,8 @@
 
                         {% if is_own_profile %}
                             <div class="d-grid gap-2">
-                                <a href="{% url 'core:profile' %}" class="btn btn-outline-primary disabled">
-                                    Редактировать профиль (скоро)
+                                <a href="{% url 'core:edit_profile' %}" class="btn btn-outline-primary">
+                                    Редактировать профиль
                                 </a>
                                 <a href="#" class="btn btn-outline-secondary disabled">
                                     Сменить пароль (скоро)

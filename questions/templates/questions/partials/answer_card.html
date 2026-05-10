@@ -1,13 +1,17 @@
 {% load static %}
 
-<article class="card shadow-sm mb-3">
+<article class="card shadow-sm mb-3 {% if answer.is_correct %}border-success border-2{% endif %}">
     <div class="card-body">
-
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div class="d-flex align-items-center gap-2">
-                <div class="avatar-placeholder rounded-circle"
-                    style="width: 28px; height: 28px; font-size: 0.8rem;">IV</div>
-                <a href="profile.html" class="text-decoration-none text-dark fw-medium">
+                <div class="avatar-placeholder rounded-circle" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                {% if user.profile.avatar %}
+                    <img src="{{ MEDIA_URL }}{{ user.avatar }}">
+                {% else %}
+                    {{ answer.author.profile.display_name|slice:":2"|upper }}
+                {% endif %}
+                </div>
+                <a href="{% url 'core:profile_by_nickname' answer.author.profile.display_name %}" class="text-decoration-none text-dark fw-medium">
                     {{ answer.author.profile.display_name }}
                 </a>
                 <span class="text-muted small">•</span>
@@ -15,6 +19,9 @@
                     {{ answer.created_at }}
                 </time>
             </div>
+            {% if answer.is_correct %}
+                <span class="badge bg-success">✓ Правильный ответ</span>
+            {% endif %}
         </div>
 
         <div class="answer-text mb-3">
@@ -25,10 +32,27 @@
 
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" disabled>
+                <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 answer-like-btn
+                    {% if user.is_authenticated and answer.has_liked %}active-like{% endif %}"
+                    data-answer-id="{{ answer.id }}"
+                >
                     <img src="{% static 'questions/img/like_icon.png' %}" alt="Лайк" width="20" height="14">
-                    <span>{{ answer.likes_count }}</span>
+                    <span class="answer-likes-count">{{ answer.likes_count }}</span>
                 </button>
+
+                {% if user.is_authenticated and user == question.author %}
+                    <button class="btn btn-sm
+                        {% if answer.is_correct %}btn-success disabled{% else %}btn-outline-success{% endif %} mark-best-btn"
+                        data-answer-id="{{ answer.id }}"
+                        {% if answer.is_correct %}disabled{% endif %}
+                    >
+                        {% if answer.is_correct %}
+                            ✓ Правильный
+                        {% else %}
+                            Сделать правильным
+                        {% endif %}
+                    </button>
+                {% endif %}
             </div>
         </div>
     </div>
