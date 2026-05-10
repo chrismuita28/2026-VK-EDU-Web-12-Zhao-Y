@@ -1,0 +1,106 @@
+{% load static %}
+
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Редактирование профиля | ItProger Forum</title>
+    <link href="{% static 'questions/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'questions/css/mystyle.css' %}" rel="stylesheet">
+</head>
+
+<body>
+    <header class="bg-light border-bottom py-3">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="{% url 'questions:index' %}" class="text-decoration-none d-flex align-items-center gap-2">
+                    <span class="fs-5 fw-bold text-dark">ItProger Forum</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h2 class="h5 mb-0 fw-bold">Настройки профиля</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <form method="POST" action="{% url 'core:edit_profile' %}">
+                            {% csrf_token %}
+
+                            <div class="text-center mb-4">
+                                <div class="avatar-preview rounded-circle mx-auto d-flex align-items-center justify-content-center fw-bold text-white mb-2"
+                                     style="width: 100px; height: 100px; background-color: #6c757d; font-size: 1.5rem; overflow: hidden;">
+                                    {% if user.profile.avatar %}
+                                        <img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                    {% else %}
+                                        {{ user.profile.nickname|default:user.email|slice:":2"|upper }}
+                                    {% endif %}
+                                </div>
+                                <p class="small text-muted mb-0">Текущее изображение</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_display_name" class="form-label fw-bold">Отображаемое имя (Никнейм)</label>
+                                <input type="text" 
+                                    class="form-control {% if form.nickname.errors %}is-invalid{% endif %}" 
+                                    id="id_nickname" 
+                                    name="nickname" 
+                                    value="{{ form.nickname.value|default:user.profile.nickname }}" 
+                                    placeholder="Введите новый никнейм">
+                                <div class="form-text">Это имя будут видеть другие пользователи.</div>
+                                {% if form.nickname.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.nickname.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="id_avatar" class="form-label fw-bold">Новая аватарка</label>
+                                <input class="form-control" 
+                                       type="file" 
+                                       id="id_avatar" 
+                                       name="avatar"
+                                       accept="image/png, image/jpeg, image/gif">
+                                <div class="form-text">Поддерживаются JPG, PNG, GIF. Максимальный размер 5 МБ.</div>
+                                {% if form.avatar.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.avatar.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_bio" class="form-label fw-bold">О себе</label>
+                                <textarea class="form-control" id="id_bio" name="bio" rows="3">{{ form.bio.value|default:user.profile.bio }}</textarea>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                                <a href="{% url 'core:profile' %}" class="btn btn-outline-secondary">Отмена</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include "core/partials/footer.html" %}
+    <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

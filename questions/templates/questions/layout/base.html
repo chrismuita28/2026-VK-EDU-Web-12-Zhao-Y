@@ -28,9 +28,14 @@
                 </form>
 
                 <div class="header-actions d-flex align-items-center gap-2">
-                    <a href="{% url 'core:login' %}" class="btn btn-outline-secondary btn-sm">Войти</a>
-                    <a href="{% url 'core:signup' %}" class="btn btn-primary btn-sm">Регистрация</a>
-                    <a href="{% url 'questions:ask' %}" class="btn btn-success btn-sm">+ Вопрос</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'core:profile' %}" class="btn btn-outline-primary btn-sm">{{ user.profile.display_name }}</a>
+                        <a href="{% url 'questions:ask' %}" class="btn btn-success btn-sm">+ Вопрос</a>
+                        <a href="{% url 'core:logout' %}" class="btn btn-outline-danger btn-sm">Выйти</a>
+                    {% else %}
+                        <a href="{% url 'core:login' %}" class="btn btn-outline-secondary btn-sm">Войти</a>
+                        <a href="{% url 'core:signup' %}" class="btn btn-primary btn-sm">Регистрация</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -58,18 +63,21 @@
                 <div class="card">
                     <div class="card-header fw-bold">Best members</div>
                     <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            <li class="d-flex align-items-center gap-2 py-1">
-                                <img src="{% static 'questions/img/kakoyto-avatar' %}" alt="" width="24" height="24" class="rounded-circle bg-secondary">
-                                <a href="{% url 'core:profile' %}" class="text-decoration-none">alex_dev</a>
-                                <span class="text-muted small ms-auto">1.2k</span>
-                            </li>
-                            <li class="d-flex align-items-center gap-2 py-1">
-                                <img src="{% static 'questions/img/kakoyto-avatar' %}" alt="" width="24" height="24" class="rounded-circle bg-secondary">
-                                <a href="{% url 'core:profile' %}" class="text-decoration-none">maria_code</a>
-                                <span class="text-muted small ms-auto">980</span>
-                            </li>
-                        </ul>
+                        <div class="d-flex flex-column gap-2">
+                            {% for profile in profiles %}
+                                {% if profile.nickname %}
+                                    <a href="{% url 'core:profile_by_nickname' profile.nickname %}" class="badge bg-secondary text-decoration-none">
+                                        {{ profile.display_name }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small">
+                                        {{ profile.user.email }}
+                                    </span>
+                                {% endif %}    
+                            {% empty %}
+                                <span class="text-muted">Нет участников</span>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -77,8 +85,9 @@
     </main>
 
     {% include "questions/partials/footer.html" %}
-
     <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'questions/js/jquery.min.js' %}"></script>
+    <script src="{% static 'questions/js/main.js' %}"></script>
 
 </body>
 </html>

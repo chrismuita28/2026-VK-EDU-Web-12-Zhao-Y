@@ -6,8 +6,15 @@
     <h2 class="mb-0 fw-bold">New Questions</h2>
     <a href="{% url 'questions:hot' %}" class="text-decoration-none text-primary fw-semibold">Hot questions &rarr;</a>
 </div>
+
 {% for question in questions %}
     {% include "questions/partials/question_card.html" %}
+{% empty %}
+    <div class="text-center py-5 bg-light rounded-3 mt-3">
+        <h4 class="mb-2">Пока нет вопросов</h4>
+        <p class="text-muted mb-4">Станьте первым, кто задаст вопрос нашему сообществу!</p>
+        <a href="{% url 'questions:ask' %}" class="btn btn-primary px-4">Задать вопрос</a>
+    </div>
 {% endfor %}
 
 {% include "questions/partials/pagination.html" %}

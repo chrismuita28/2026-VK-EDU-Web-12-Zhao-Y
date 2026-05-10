@@ -1,9 +1,45 @@
 services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    env_file:
+      - .env.docker
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-web}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-12345}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d web"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   web:
     build: .
-
-    ports: 
-      - "8000:8000"
-
+    command: >
+      sh -c "python manage.py makemigrations --noinput &&
+             python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - .:/app/
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DEBUG=${DEBUG}
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_ENGINE=${DB_ENGINE}
+      - DB_NAME=${POSTGRES_DB:-web}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-12345}
+      - DB_HOST=db
+      - DB_PORT=5432
+
+volumes:
+  postgres_data:

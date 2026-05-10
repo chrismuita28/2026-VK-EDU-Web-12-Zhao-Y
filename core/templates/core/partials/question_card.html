@@ -3,14 +3,12 @@
 <a href="{% url 'questions:question' question.id %}" class="list-group-item list-group-item-action py-3">
     <div class="d-flex justify-content-between align-items-start">
         <div class="flex-grow-1">
-            <h6 class="mb-1">Как подключить Bootstrap локально? {{question.title}}</h6>
+            <h6 class="mb-1">{{ question.title }}</h6>
             <small class="text-muted">
-                {{question.answers_cnt}} ответа • {{question.data}}
+                {{ question.answers_count }} ответов • 
+                {{ question.created_at|date:"d.m.Y" }} • 
+                Автор: {{ question.author.profile.display_name }}
             </small>
         </div>
-        <span class="badge bg-success">
-            {{question.likes_cnt}}
-            <img src="{% static 'core/img/like_icon.png' %}" alt="Лайк" width="20" height="14">
-        </span>
     </div>
 </a>
