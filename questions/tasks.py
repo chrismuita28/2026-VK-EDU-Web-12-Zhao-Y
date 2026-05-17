@@ -1,0 +1,124 @@
+from celery import shared_task
+from django.core.cache import cache
+from django.db.models import Count, Q
+from django.utils import timezone
+from datetime import timedelta
+from django.contrib.auth import get_user_model
+from questions.models import Tag, Question, Answer, Profile
+from collections import defaultdict
+
+User = get_user_model()
+
+CACHE_KEYS = {
+    'popular_tags': 'sidebar:popular_tags',
+    'best_users': 'sidebar:best_users',
+}
+CACHE_TIMEOUT = 3600      # 1 час — для планового обновления через Celery
+FALLBACK_TIMEOUT = 300    # 5 минут — для fallback при промахе кэша
+
+
+def _calculate_popular_tags_from_db():
+    """Внутренняя функция: топ-10 тегов по количеству вопросов за 3 месяца"""
+    three_months_ago = timezone.now() - timedelta(days=90)
+    
+    tags = Tag.objects.annotate(
+        question_count=Count(
+            'questions',
+            filter=Q(questions__created_at__gte=three_months_ago)
+        )
+    ).filter(
+        question_count__gt=0
+    ).order_by(
+        '-question_count', 'name'
+    ).values('id', 'name', 'question_count')[:10]
+    
+    return list(tags)
+
+
+def _calculate_best_users_from_db():
+    """Внутренняя функция: топ-10 пользователей по популярности вопросов/ответов за неделю"""
+    one_week_ago = timezone.now() - timedelta(days=7)
+    
+    # Считаем лайки вопросов по авторам
+    question_scores = Question.objects.filter(
+        created_at__gte=one_week_ago
+    ).annotate(
+        likes_count=Count('likes')
+    ).values('author_id').annotate(
+        total=Count('likes')
+    ).values('author_id', 'total')
+    
+    # Считаем лайки ответов по авторам
+    answer_scores = Answer.objects.filter(
+        created_at__gte=one_week_ago
+    ).annotate(
+        likes_count=Count('likes')
+    ).values('author_id').annotate(
+        total=Count('likes')
+    ).values('author_id', 'total')
+    
+    # Агрегируем очки по пользователям
+    user_scores = defaultdict(int)
+    for item in question_scores:
+        user_scores[item['author_id']] += item['total'] + 1  # +1 за сам факт вопроса
+    for item in answer_scores:
+        user_scores[item['author_id']] += item['total'] + 1  # +1 за сам факт ответа
+    
+    if not user_scores:
+        return []
+    
+    # Топ-10 по очкам
+    top_user_ids = sorted(user_scores.keys(), key=lambda x: user_scores[x], reverse=True)[:10]
+    
+    # Загружаем профили одним запросом
+    profiles = Profile.objects.select_related('user').filter(user_id__in=top_user_ids)
+    profile_map = {p.user_id: p for p in profiles}
+    
+    # Формируем результат в нужном порядке
+    result = []
+    for uid in top_user_ids:
+        profile = profile_map.get(uid)
+        if profile:
+            result.append({
+                'id': profile.user_id,
+                'nickname': profile.nickname or profile.user.email,
+                'email': profile.user.email,
+                'avatar': profile.avatar.url if profile.avatar else None,
+                'score': user_scores[uid]
+            })
+    
+    return result
+
+
+@shared_task(name='questions.calculate_popular_tags')
+def calculate_popular_tags():
+    """Celery-таска: пересчёт и кэширование популярных тегов"""
+    data = _calculate_popular_tags_from_db()
+    cache.set(CACHE_KEYS['popular_tags'], data, CACHE_TIMEOUT)
+    return {'status': 'ok', 'count': len(data)}
+
+
+@shared_task(name='questions.calculate_best_users')
+def calculate_best_users():
+    """Celery-таска: пересчёт и кэширование лучших пользователей"""
+    data = _calculate_best_users_from_db()
+    cache.set(CACHE_KEYS['best_users'], data, CACHE_TIMEOUT)
+    return {'status': 'ok', 'count': len(data)}
+
+
+def get_cached_popular_tags():
+    """Получить популярные теги: кэш → fallback в БД"""
+    data = cache.get(CACHE_KEYS['popular_tags'])
+    if data is None:
+        data = _calculate_popular_tags_from_db()
+        cache.set(CACHE_KEYS['popular_tags'], data, FALLBACK_TIMEOUT)
+    return data
+
+
+def get_cached_best_users():
+    """Получить лучших пользователей: кэш → fallback в БД"""
+    data = cache.get(CACHE_KEYS['best_users'])
+    if data is None:
+        data = _calculate_best_users_from_db()
+        cache.set(CACHE_KEYS['best_users'], data, FALLBACK_TIMEOUT)
+    return data

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from questions.forms import AskForm, AnswerForm
+from questions.tasks import get_cached_popular_tags, get_cached_best_users
 
 def paginate(request, objects_list, per_page=4):
     if not objects_list:
@@ -23,18 +24,17 @@ def paginate(request, objects_list, per_page=4):
         page_object = paginator.page(paginator.num_pages)
     return page_object
 
-def _get_profiles():
-    profiles = Profile.objects.select_related('user').annotate(answers_count=Count('user__answers')).order_by('-answers_count')[:5]
-    return {"profiles": profiles}
+def _get_sidebar_data():
+    return {
+        'tags': get_cached_popular_tags(),
+        'profiles': get_cached_best_users(),
+    }
 
-def _get_tags():
-    return {"tags": Tag.objects.all().order_by("name")[:20]}
 
 def _render_question_list(request, queryset, template_name, extra_context=None):
     page_object = paginate(request, queryset)
     context = {
-        **_get_profiles(),
-        **_get_tags(),
+        **_get_sidebar_data(),
         "questions": page_object.object_list,
         "page_obj": page_object
     }

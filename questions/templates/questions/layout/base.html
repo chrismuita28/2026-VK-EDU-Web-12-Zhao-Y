@@ -54,7 +54,7 @@
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-2">
                             {% for tag in tags %}
-                                <a href="{% url 'questions:tag' tag %}" class="badge bg-secondary text-decoration-none">#{{ tag }}</a>
+                                <a href="{% url 'questions:tag' tag.name %}" class="badge bg-secondary text-decoration-none">#{{ tag.name }}</a>
                             {% endfor %}
                         </div>
                     </div>
@@ -67,7 +67,7 @@
                             {% for profile in profiles %}
                                 {% if profile.nickname %}
                                     <a href="{% url 'core:profile_by_nickname' profile.nickname %}" class="badge bg-secondary text-decoration-none">
-                                        {{ profile.display_name }}
+                                        {{ profile.nickname }}
                                     </a>
                                 {% else %}
                                     <span class="text-muted small">
