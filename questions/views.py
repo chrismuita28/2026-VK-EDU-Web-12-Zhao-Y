@@ -3,11 +3,13 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import JsonResponse
 from django.db.models import Count, OuterRef, Exists, Value, BooleanField
 from questions.models import Question, Tag, Profile, Answer, QuestionLike, AnswerLike
-from typing import TYPE_CHECKING
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from questions.forms import AskForm, AnswerForm
-from questions.tasks import get_cached_popular_tags, get_cached_best_users
+from questions.tasks import get_cached_popular_tags, get_cached_best_users, notify_new_answer
+import time
+import jwt
 
 def paginate(request, objects_list, per_page=4):
     if not objects_list:
@@ -42,6 +44,21 @@ def _render_question_list(request, queryset, template_name, extra_context=None):
         context.update(extra_context)
     return render(request, template_name, context)
 
+def generate_centrifugo_token(user):
+    if not user or not user.is_authenticated:
+        return ""  # ← Важно: пустая строка, не None
+    
+    payload = {
+        "sub": str(user.id),  # ← Centrifugo ждёт "sub"
+        "exp": int(time.time()) + 3600,
+        "channels": ["question:question:*"]  # ← Разрешаем подписку на паттерн
+    }
+    
+    return jwt.encode(
+        payload,
+        settings.CENTRIFUGO_SECRET,  # Должен совпадать с hmac_secret_key в config.json
+        algorithm="HS256"
+    )
 
 def index(request):
     questions = Question.objects.new(user=request.user)
@@ -72,6 +89,20 @@ def question(request, question_id):
         form = AnswerForm(request.POST)
         if form.is_valid():
             answer = form.save(question=question_obj, author=request.user)
+            try:
+                payload = {
+                    "id": answer.pk,
+                    "author_name": getattr(answer.author.profile, 'nickname', None) or answer.author.email,
+                    "text": answer.text,
+                    "created_at": answer.created_at.strftime("%H:%M"),
+                    "is_correct": answer.is_correct
+                }
+                notify_new_answer.delay(question_obj.pk, payload)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"❌ Failed to queue task: {e}")
+
             return redirect(f'{request.path}?new_answer={answer.pk}#answer-{answer.pk}')
     else:
         form = AnswerForm()
@@ -91,6 +122,9 @@ def question(request, question_id):
         "page_obj": page_object,
         "form": form,
         "new_answer_id": request.GET.get('new_answer'),
+        "centrifugo_token": generate_centrifugo_token(request.user),
+        "centrifugo_ws_url": settings.CENTRIFUGO_WS_URL,
+        "centrifugo_namespace": settings.CENTRIFUGO_NAMESPACE,
     }
     return render(request, "questions/question.html", context)
 

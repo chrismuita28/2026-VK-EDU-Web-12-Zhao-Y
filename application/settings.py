@@ -163,8 +163,10 @@ REDIS_BROKER_DB = os.getenv("REDIS_BROKER_DB", "2")
 REDIS_BEAT_DB = os.getenv("REDIS_BEAT_DB", "3")
 
 
-CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}"
-CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}"
+# CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}"
+# CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}"
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/2")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://redis:6379/2")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
@@ -172,7 +174,8 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
 CELERY_BEAT_SCHEDULER = "redbeat.RedBeatScheduler"
-CELERY_REDBEAT_REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BEAT_DB}"
+CELERY_REDBEAT_REDIS_URL = os.getenv("CELERY_REDBEAT_REDIS_URL", "redis://redis:6379/3")
+# CELERY_REDBEAT_REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BEAT_DB}"
 CELERY_REDBEAT_LOCK_TIMEOUT = 45 
 
 CACHES = {
@@ -184,12 +187,6 @@ CACHES = {
     }
 }
 
-# CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}"
-# CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BEAT_DB}"
-
-# CELERY_BEAT_SCHEDULER = "redbeat.RedBeatScheduler"
-# CELERY_REDBEAT_REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BEAT_DB}"
-
 from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
@@ -200,5 +197,25 @@ CELERY_BEAT_SCHEDULE = {
     'calculate-best-users-hourly': {
         'task': 'questions.calculate_best_users',
         'schedule': 3600,
+    },
+}
+
+CENTRIFUGO_URL = os.getenv("CENTRIFUGO_URL", "http://centrifugo:8000")
+CENTRIFUGO_WS_URL = os.getenv("CENTRIFUGO_WS_URL", "ws://localhost:8001/connection/websocket")
+CENTRIFUGO_API_KEY = os.getenv("CENTRIFUGO_API_KEY")
+CENTRIFUGO_SECRET = os.getenv("CENTRIFUGO_SECRET")
+CENTRIFUGO_NAMESPACE = os.getenv("CENTRIFUGO_NAMESPACE", "question")
+
+# Включаем отладочные логи для отладки
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler'},
+    },
+    'root': {'handlers': ['console'], 'level': 'INFO'},
+    'loggers': {
+        'questions': {'handlers': ['console'], 'level': 'DEBUG', 'propagate': False},
+        'django': {'handlers': ['console'], 'level': 'INFO'},
     },
 }

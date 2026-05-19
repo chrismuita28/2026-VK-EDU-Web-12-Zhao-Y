@@ -1,0 +1,27 @@
+{
+  "client": {
+    "token": {
+      "hmac_secret_key": "9Hd92pvEQUQBK4B1gugfVMo8fwfHrNF94yRVpAXU-l2WIz-OqgAypm6uUlyUSCZmyUySX3PYN9G-37uJtYU-Vg"
+    },
+    "allowed_origins": ["*"]
+  },
+  "admin": {
+    "enabled": false,
+    "password": "GGuVFp3OiKESBhwVL0vuTw",
+    "secret": "mtL3VgK7d5kmJimhLWX6YiJQpC7SgsNxENstji0E_uWoehDTcU9YLZ8lTTTJ-ibjONCcdDHUthhy-Geo0mlexw"
+  },
+  "http_api": {
+    "key": "N0c2PEfIMmU_PjnRtqK9Q_Ht8AR4OUMSibaHdLrr6135kniUrI8DqdUUvAtoy_KBivRi749O7bGBRMDOWmz3Zw"
+  },
+  "channel": {
+    "namespaces": [
+      {
+        "name": "question",
+        "allow_subscribe_for_anonymous": false,
+        "allow_subscribe_for_client": true,
+        "history_size": 1,
+        "history_ttl": "60s"
+      }
+    ]
+  }
+}

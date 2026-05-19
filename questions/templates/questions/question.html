@@ -127,9 +127,13 @@
 
         <section class="mb-4">
             <h2 class="h4 mb-3">Ответы ({{ question.answers_count }})</h2>
-            {% for answer in answers %}
-                {% include "questions/partials/answer_card.html" %}
-            {% endfor %}
+            <div id="answers-list">
+                {% for answer in answers %}
+                    {% include "questions/partials/answer_card.html" %}
+                {% empty %}
+                    <div id="no-answers-msg" class="text-center text-muted py-4 bg-light rounded">Пока нет ответов. Будьте первым!</div>
+                {% endfor %}
+            </div>
         </section>
 
         {% include "questions/partials/pagination.html" %}
@@ -168,6 +172,98 @@
     <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'questions/js/jquery.min.js' %}"></script>
     <script src="{% static 'questions/js/main.js' %}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/centrifuge@5/dist/centrifuge.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = "{{ centrifugo_token|escapejs }}";
+        const wsUrl = "{{ centrifugo_ws_url|escapejs }}";
+        const namespace = "{{ centrifugo_namespace|escapejs }}";
+        const questionId = {{ question.id }};
+
+        console.log("🔑 Token:", token ? "✅ present" : "❌ empty");
+        console.log("🔌 URL:", wsUrl);
+        
+        // Анонимы не подключаются (токен пустой)
+        if (!token || !wsUrl) {
+            console.log("⚠️ Skipping Centrifuge init: no token or URL");
+            return;
+        }
+
+        const centrifuge = new Centrifuge(wsUrl, { token: token });
+        
+        centrifuge.on('connected', (ctx) => console.log('✅ Connected:', ctx));
+        centrifuge.on('disconnected', (ctx) => console.log('❌ Disconnected:', ctx.reason, ctx.code));
+        centrifuge.on('error', (err) => console.error('💥 Error:', err));
+        centrifuge.connect();
+
+        const channel = `${namespace}:question:${questionId}`;
+        console.log("📡 Subscribing to:", channel);
+        
+        const subscription = centrifuge.newSubscription(channel);
+        
+        subscription.on('subscribed', (ctx) => console.log('📡 Subscribed:', ctx));
+        subscription.on('error', (err) => console.error('🚫 Subscribe error:', err));
+        
+        subscription.on("publication", (ctx) => {
+            console.log("📨 GOT PUBLICATION RAW:", ctx);  // ← ДОБАВИТЬ ЭТУ СТРОКУ ПЕРВОЙ
+            console.log("📨 Data:", ctx.data);
+            console.log("📨 Received publication:", ctx.data);
+            const data = ctx.data;
+            const params = new URLSearchParams(window.location.search);
+            const currentPage = parseInt(params.get('page') || '1');
+            
+            const answersList = document.getElementById('answers-list');
+            const noAnswersMsg = document.getElementById('no-answers-msg');
+
+            if (!answersList || (answersList.children.length <= 1 && noAnswersMsg)) {
+                window.location.reload();
+                return;
+            }
+
+            if (currentPage === 1) {
+                const answerHtml = `
+                    <div id="answer-${data.id}" class="card mb-3 shadow-sm border-0 new-answer-highlight">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:0.8rem;">
+                                        ${data.author_name.substring(0,2).toUpperCase()}
+                                    </div>
+                                    <span class="fw-medium">${data.author_name}</span>
+                                </div>
+                                <small class="text-muted">${data.created_at}</small>
+                            </div>
+                            <div class="answer-text mb-2">${data.text.replace(/\n/g, '<br>')}</div>
+                            ${data.is_correct ? '<span class="badge bg-success">✓ Лучший ответ</span>' : ''}
+                        </div>
+                    </div>
+                `;
+                
+                answersList.insertAdjacentHTML('afterbegin', answerHtml);
+                if (noAnswersMsg) noAnswersMsg.remove();
+
+                const newEl = document.getElementById(`answer-${data.id}`);
+                if (newEl) {
+                    newEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else {
+                const questionTitle = document.querySelector('h1.h3')?.innerText.trim() || 'этот вопрос';
+                alert(`На вопрос "${questionTitle}" появился новый ответ!`);
+            }
+        });
+
+        subscription.subscribe();
+        window._debug = {
+            centrifuge: centrifuge,
+            subscription: subscription,
+            channel: channel,
+            token: token
+        };
+
+        console.log("🐛 Debug ready: use window._debug.subscription.channel");
+    });
+    </script>
 
 </body>
 </html>

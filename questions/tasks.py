@@ -3,9 +3,11 @@ from django.core.cache import cache
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from questions.models import Tag, Question, Answer, Profile
 from collections import defaultdict
+import requests
 
 User = get_user_model()
 
@@ -13,8 +15,8 @@ CACHE_KEYS = {
     'popular_tags': 'sidebar:popular_tags',
     'best_users': 'sidebar:best_users',
 }
-CACHE_TIMEOUT = 3600      # 1 час — для планового обновления через Celery
-FALLBACK_TIMEOUT = 300    # 5 минут — для fallback при промахе кэша
+CACHE_TIMEOUT = 3600
+FALLBACK_TIMEOUT = 300
 
 
 def _calculate_popular_tags_from_db():
@@ -72,7 +74,7 @@ def _calculate_best_users_from_db():
     
     # Загружаем профили одним запросом
     profiles = Profile.objects.select_related('user').filter(user_id__in=top_user_ids)
-    profile_map = {p.user_id: p for p in profiles}
+    profile_map = {p.user.pk: p for p in profiles}
     
     # Формируем результат в нужном порядке
     result = []
@@ -80,7 +82,7 @@ def _calculate_best_users_from_db():
         profile = profile_map.get(uid)
         if profile:
             result.append({
-                'id': profile.user_id,
+                'id': profile.user.pk,
                 'nickname': profile.nickname or profile.user.email,
                 'email': profile.user.email,
                 'avatar': profile.avatar.url if profile.avatar else None,
@@ -92,7 +94,6 @@ def _calculate_best_users_from_db():
 
 @shared_task(name='questions.calculate_popular_tags')
 def calculate_popular_tags():
-    """Celery-таска: пересчёт и кэширование популярных тегов"""
     data = _calculate_popular_tags_from_db()
     cache.set(CACHE_KEYS['popular_tags'], data, CACHE_TIMEOUT)
     return {'status': 'ok', 'count': len(data)}
@@ -100,14 +101,12 @@ def calculate_popular_tags():
 
 @shared_task(name='questions.calculate_best_users')
 def calculate_best_users():
-    """Celery-таска: пересчёт и кэширование лучших пользователей"""
     data = _calculate_best_users_from_db()
     cache.set(CACHE_KEYS['best_users'], data, CACHE_TIMEOUT)
     return {'status': 'ok', 'count': len(data)}
 
 
 def get_cached_popular_tags():
-    """Получить популярные теги: кэш → fallback в БД"""
     data = cache.get(CACHE_KEYS['popular_tags'])
     if data is None:
         data = _calculate_popular_tags_from_db()
@@ -116,9 +115,42 @@ def get_cached_popular_tags():
 
 
 def get_cached_best_users():
-    """Получить лучших пользователей: кэш → fallback в БД"""
     data = cache.get(CACHE_KEYS['best_users'])
     if data is None:
         data = _calculate_best_users_from_db()
         cache.set(CACHE_KEYS['best_users'], data, FALLBACK_TIMEOUT)
     return data
+
+import logging
+logger = logging.getLogger(__name__)
+
+@shared_task(name='questions.notify_new_answer')
+def notify_new_answer(question_id, answer_data):
+    """Публикует новый ответ в Centrifugo канал"""
+    channel = f"{settings.CENTRIFUGO_NAMESPACE}:question:{question_id}"
+    
+    # ✅ Centrifugo v6: эндпоинт всегда /api, метод указывается в теле
+    url = f"{settings.CENTRIFUGO_URL}/api"
+    
+    # ✅ Centrifugo v6: авторизация через Authorization header
+    headers = {
+        "Authorization": f"apikey {settings.CENTRIFUGO_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    # ✅ Centrifugo v6: JSON-RPC формат запроса
+    payload = {
+        "method": "publish",
+        "params": {
+            "channel": channel,
+            "data": answer_data
+        }
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=5)
+        response.raise_for_status()  # Выбросит ошибку при 4xx/5xx
+        logger.info(f"✅ Published to {channel}: {response.json()}")
+    except requests.RequestException as e:
+        logger.error(f"❌ Failed to publish to Centrifugo: {e}")
+        raise  # Пробрасываем ошибку, чтобы Celery залогировал failure

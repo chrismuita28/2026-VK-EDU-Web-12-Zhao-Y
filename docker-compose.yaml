@@ -83,6 +83,18 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+  
+  centrifugo:
+    image: centrifugo/centrifugo:v6
+    container_name: app_centrifugo
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./centrifugo:/config:ro
+    command: centrifugo -c /config/config.json
+    depends_on:
+      - redis
+    restart: unless-stopped
 
 volumes:
   postgres_data:
