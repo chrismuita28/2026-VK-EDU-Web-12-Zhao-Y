@@ -4,9 +4,9 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div class="d-flex align-items-center gap-2">
-                <div class="avatar-placeholder rounded-circle" style="width: 28px; height: 28px; font-size: 0.8rem;">
-                {% if user.profile.avatar %}
-                    <img src="{{ MEDIA_URL }}{{ user.avatar }}">
+                <div class="avatar-placeholder rounded-circle" style="width: 28px; height: 28px; font-size: 0.8rem; overflow: hidden">
+                {% if answer.author.profile.avatar %}
+                    <img src="{{ answer.author.profile.avatar.url }}">
                 {% else %}
                     {{ answer.author.profile.display_name|slice:":2"|upper }}
                 {% endif %}
