@@ -1,9 +1,103 @@
 services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    env_file:
+      - .env.docker
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-web}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-12345}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d web"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   web:
     build: .
-
-    ports: 
-      - "8000:8000"
-
+    command: >
+      sh -c "python manage.py makemigrations --noinput &&
+             python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - .env.docker
     volumes:
-      - .:/app/
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    container_name: app_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  celery_worker:
+    build: .
+    container_name: app_celery_worker
+    command: celery -A application worker -l info -c 2
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+    env_file:
+      - .env.docker
+    environment:
+      - DJANGO_ENV=docker
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  celery_beat:
+    build: .
+    container_name: app_celery_beat
+    command: celery -A application beat -l info --scheduler redbeat.RedBeatScheduler
+    volumes:
+      - .:/app
+    env_file:
+      - .env.docker
+    environment:
+      - DJANGO_ENV=docker
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+  
+  centrifugo:
+    image: centrifugo/centrifugo:v6
+    container_name: app_centrifugo
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./centrifugo:/config:ro
+    command: centrifugo -c /config/config.json
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_volume:
+  media_volume:
