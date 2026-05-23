@@ -41,7 +41,6 @@ def _calculate_best_users_from_db():
     """Внутренняя функция: топ-10 пользователей по популярности вопросов/ответов за неделю"""
     one_week_ago = timezone.now() - timedelta(days=7)
     
-    # Считаем лайки вопросов по авторам
     question_scores = Question.objects.filter(
         created_at__gte=one_week_ago
     ).annotate(
@@ -50,7 +49,6 @@ def _calculate_best_users_from_db():
         total=Count('likes')
     ).values('author_id', 'total')
     
-    # Считаем лайки ответов по авторам
     answer_scores = Answer.objects.filter(
         created_at__gte=one_week_ago
     ).annotate(
@@ -59,24 +57,19 @@ def _calculate_best_users_from_db():
         total=Count('likes')
     ).values('author_id', 'total')
     
-    # Агрегируем очки по пользователям
     user_scores = defaultdict(int)
     for item in question_scores:
-        user_scores[item['author_id']] += item['total'] + 1  # +1 за сам факт вопроса
+        user_scores[item['author_id']] += item['total'] + 1
     for item in answer_scores:
-        user_scores[item['author_id']] += item['total'] + 1  # +1 за сам факт ответа
+        user_scores[item['author_id']] += item['total'] + 1
     
     if not user_scores:
         return []
     
-    # Топ-10 по очкам
     top_user_ids = sorted(user_scores.keys(), key=lambda x: user_scores[x], reverse=True)[:10]
-    
-    # Загружаем профили одним запросом
     profiles = Profile.objects.select_related('user').filter(user_id__in=top_user_ids)
     profile_map = {p.user.pk: p for p in profiles}
     
-    # Формируем результат в нужном порядке
     result = []
     for uid in top_user_ids:
         profile = profile_map.get(uid)
@@ -126,19 +119,14 @@ logger = logging.getLogger(__name__)
 
 @shared_task(name='questions.notify_new_answer')
 def notify_new_answer(question_id, answer_data):
-    """Публикует новый ответ в Centrifugo канал"""
     channel = f"{settings.CENTRIFUGO_NAMESPACE}:question:{question_id}"
-    
-    # ✅ Centrifugo v6: эндпоинт всегда /api, метод указывается в теле
     url = f"{settings.CENTRIFUGO_URL}/api"
     
-    # ✅ Centrifugo v6: авторизация через Authorization header
     headers = {
         "Authorization": f"apikey {settings.CENTRIFUGO_API_KEY}",
         "Content-Type": "application/json"
     }
     
-    # ✅ Centrifugo v6: JSON-RPC формат запроса
     payload = {
         "method": "publish",
         "params": {
@@ -149,8 +137,8 @@ def notify_new_answer(question_id, answer_data):
     
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=5)
-        response.raise_for_status()  # Выбросит ошибку при 4xx/5xx
-        logger.info(f"✅ Published to {channel}: {response.json()}")
+        response.raise_for_status()
+        logger.info(f"Published to {channel}: {response.json()}")
     except requests.RequestException as e:
-        logger.error(f"❌ Failed to publish to Centrifugo: {e}")
-        raise  # Пробрасываем ошибку, чтобы Celery залогировал failure
+        logger.error(f"Failed to publish to Centrifugo: {e}")
+        raise

@@ -38,9 +38,9 @@
                 <div class="card shadow-sm">
                     <div class="card-body text-center p-4">
                         <div class="avatar-placeholder rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center fw-bold text-white"
-                            style="width: 120px; height: 120px; background-color: #6c757d; font-size: 2rem;">
+                            style="width: 120px; height: 120px; background-color: #6c757d; font-size: 2rem; overflow: hidden;">
                             {% if user.profile.avatar %}
-                                <img src="{{ MEDIA_URL }}{{ user.avatar }}">
+                                <img src="{{ user.profile.avatar.url }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
                             {% else %}
                                 {{ profile.nickname|default:profile_user.email|slice:":2"|upper }}
                             {% endif %}

@@ -46,19 +46,15 @@ def _render_question_list(request, queryset, template_name, extra_context=None):
 
 def generate_centrifugo_token(user):
     if not user or not user.is_authenticated:
-        return ""  # ← Важно: пустая строка, не None
+        return ""
     
     payload = {
-        "sub": str(user.id),  # ← Centrifugo ждёт "sub"
+        "sub": str(user.id),
         "exp": int(time.time()) + 3600,
-        "channels": ["question:question:*"]  # ← Разрешаем подписку на паттерн
+        "channels": ["question:question:*"]
     }
     
-    return jwt.encode(
-        payload,
-        settings.CENTRIFUGO_SECRET,  # Должен совпадать с hmac_secret_key в config.json
-        algorithm="HS256"
-    )
+    return jwt.encode(payload, settings.CENTRIFUGO_SECRET, algorithm="HS256")
 
 def index(request):
     questions = Question.objects.new(user=request.user)

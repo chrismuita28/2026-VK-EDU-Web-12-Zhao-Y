@@ -38,7 +38,7 @@
                             {% endfor %}
                         {% endif %}
 
-                        <form method="POST" action="{% url 'core:edit_profile' %}">
+                        <form method="POST" action="{% url 'core:edit_profile' %}" enctype="multipart/form-data">
                             {% csrf_token %}
 
                             <div class="text-center mb-4">
