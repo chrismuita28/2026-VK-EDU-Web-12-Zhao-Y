@@ -1,0 +1,5 @@
+services:
+  wsgi_app:
+    build: .
+    ports:
+      - "8081:8081"

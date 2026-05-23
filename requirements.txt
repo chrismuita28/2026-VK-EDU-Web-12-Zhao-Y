@@ -13,3 +13,4 @@ django-redis==6.0.0
 redbeat==0.0.1
 requests==2.33.1
 PyJWT==2.12.1
+gunicorn==26.0.0
