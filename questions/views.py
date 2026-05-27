@@ -61,7 +61,7 @@ def index(request):
     return _render_question_list(request, questions, "questions/index.html")
 
 def hot(request):
-    questions = Question.objects.new(user=request.user)
+    questions = Question.objects.hot(user=request.user)
     return _render_question_list(request, questions, "questions/hot.html")
 
 def tag(request, tag_name):
@@ -97,7 +97,7 @@ def question(request, question_id):
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f"❌ Failed to queue task: {e}")
+                logger.warning(f"Failed to queue task: {e}")
 
             return redirect(f'{request.path}?new_answer={answer.pk}#answer-{answer.pk}')
     else:

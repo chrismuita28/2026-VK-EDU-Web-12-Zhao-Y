@@ -3,16 +3,15 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from faker import Faker
-from questions.models import Tag, Profile, Question, Answer
+from questions.models import Tag, Profile, Question, Answer, QuestionLike, AnswerLike
 
 User = get_user_model()
 
 class Command(BaseCommand):
-    help = 'Эффективно заполняет БД тестовыми данными. Использование: python manage.py fill_db <ratio>'
     BATCH_SIZE = 1000
 
     def add_arguments(self, parser):
-        parser.add_argument('ratio', type=int, help='Коэффициент масштабирования генерации данных')
+        parser.add_argument('ratio', type=int)
 
     def handle(self, *args, **options):
         ratio = options['ratio']
@@ -32,9 +31,15 @@ class Command(BaseCommand):
         if tag_ids and question_ids:
             self._attach_tags_to_questions(question_ids, tag_ids)
         
-        self._create_answers(ratio, question_ids, user_ids)
-
+        answer_ids = self._create_answers(ratio, question_ids, user_ids)
+        
+        self._create_question_likes(ratio, question_ids, user_ids)
+        
         self.stdout.write(self.style.SUCCESS('\nБаза данных успешно заполнена!'))
+        self.stdout.write(self.style.SUCCESS(
+            f'Создано: {ratio} пользователей, {ratio * 10} вопросов, '
+            f'{ratio * 100} ответов, {ratio} тегов, {ratio * 200} оценок'
+        ))
 
     def _get_created_ids(self, model, filter_field, values, order_by='-id', limit=None):
         qs = model.objects.filter(**{f'{filter_field}__in': values}).order_by(order_by)
@@ -49,7 +54,7 @@ class Command(BaseCommand):
         return self._get_created_ids(model, id_field, values, limit=len(objects))
 
     def _create_users(self, ratio):
-        self.stdout.write('1/6. Генерация пользователей...')
+        self.stdout.write('1/7. Генерация пользователей...')
         hashed_pw = make_password('test123')
         
         users = [
@@ -65,7 +70,7 @@ class Command(BaseCommand):
         return self._bulk_create_with_ids(User, users, 'email')
 
     def _create_profiles(self, user_ids):
-        self.stdout.write('2/6. Генерация профилей...')
+        self.stdout.write('2/7. Генерация профилей...')
         
         nicknames = [f"{self.fake.user_name()}_{i}" for i in range(len(user_ids))]
         profiles = [
@@ -77,16 +82,15 @@ class Command(BaseCommand):
         self.stdout.write(f'   Создано {len(profiles)} профилей.')
 
     def _create_tags(self, ratio):
-        self.stdout.write('3/6. Генерация тегов...')
-        tag_count = min(ratio, 50)
-        tag_names = [f'tag_{self.fake.word()[:8]}' for _ in range(tag_count)]
+        self.stdout.write('3/7. Генерация тегов...')
+        tag_names = [f'tag_{self.fake.word()[:8]}_{i}' for i in range(ratio)]
         
         tags = [Tag(name=name) for name in tag_names]
         return self._bulk_create_with_ids(Tag, tags, 'name')
 
     def _create_questions(self, ratio, user_ids):
-        count = ratio * 5
-        self.stdout.write(f'4/6. Генерация {count} вопросов...')
+        count = ratio * 10
+        self.stdout.write(f'4/7. Генерация {count} вопросов...')
         
         questions = [
             Question(
@@ -101,7 +105,7 @@ class Command(BaseCommand):
         return list(Question.objects.order_by('-id').values_list('pk', flat=True)[:count])
 
     def _attach_tags_to_questions(self, question_ids, tag_ids):
-        self.stdout.write('5/6. Привязка тегов к вопросам...')
+        self.stdout.write('5/7. Привязка тегов к вопросам...')
         m2m_model = Question.tags.through
         batch = []
         
@@ -120,8 +124,8 @@ class Command(BaseCommand):
         self.stdout.write('   Привязка тегов завершена.')
 
     def _create_answers(self, ratio, question_ids, user_ids):
-        count = ratio * 10
-        self.stdout.write(f'6/6. Генерация {count} ответов...')
+        count = ratio * 100
+        self.stdout.write(f'6/7. Генерация {count} ответов...')
         
         answers = [
             Answer(
@@ -134,4 +138,36 @@ class Command(BaseCommand):
         ]
         
         Answer.objects.bulk_create(answers, batch_size=self.BATCH_SIZE)
-        self.stdout.write(f'   Создано {len(answers)} ответов.')
+        return list(Answer.objects.order_by('-id').values_list('pk', flat=True)[:count])
+
+    def _create_question_likes(self, ratio, question_ids, user_ids):
+        """Генерация оценок пользователей (лайков к вопросам) - ratio * 200"""
+        count = ratio * 200
+        if not question_ids or not user_ids:
+            return
+            
+        self.stdout.write(f'7/7. Генерация {count} оценок (лайков)...')
+        
+        created_pairs = set()
+        likes = []
+        attempts = 0
+        max_attempts = count * 3
+        
+        while len(likes) < count and attempts < max_attempts:
+            user_id = random.choice(user_ids)
+            question_id = random.choice(question_ids)
+            pair = (user_id, question_id)
+            
+            if pair not in created_pairs:
+                created_pairs.add(pair)
+                likes.append(QuestionLike(user_id=user_id, question_id=question_id))
+            attempts += 1
+            
+            if len(likes) >= self.BATCH_SIZE:
+                QuestionLike.objects.bulk_create(likes, ignore_conflicts=True)
+                likes = []
+        
+        if likes:
+            QuestionLike.objects.bulk_create(likes, ignore_conflicts=True)
+            
+        self.stdout.write(f'   Создано {len(created_pairs)} оценок к вопросам.')

@@ -14,11 +14,11 @@ from pathlib import Path
 import os
 import environ
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 
 django_env = os.environ.get('DJANGO_ENV', 'local')
-env_file_path = os.path.join(BASE_DIR, f'.env.{django_env}')
+env_file_path = BASE_DIR / f'.env.{django_env}'
 
 if os.path.exists(env_file_path):
     environ.Env.read_env(env_file_path)
