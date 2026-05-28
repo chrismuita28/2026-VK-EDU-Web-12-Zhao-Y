@@ -181,34 +181,33 @@
         const namespace = "{{ centrifugo_namespace|escapejs }}";
         const questionId = {{ question.id }};
 
-        console.log("🔑 Token:", token ? "✅ present" : "❌ empty");
-        console.log("🔌 URL:", wsUrl);
+        console.log("Token:", token ? "present" : "empty");
+        console.log("URL:", wsUrl);
         
-        // Анонимы не подключаются (токен пустой)
         if (!token || !wsUrl) {
-            console.log("⚠️ Skipping Centrifuge init: no token or URL");
+            console.log("Skipping Centrifuge init: no token or URL");
             return;
         }
 
         const centrifuge = new Centrifuge(wsUrl, { token: token });
         
-        centrifuge.on('connected', (ctx) => console.log('✅ Connected:', ctx));
-        centrifuge.on('disconnected', (ctx) => console.log('❌ Disconnected:', ctx.reason, ctx.code));
-        centrifuge.on('error', (err) => console.error('💥 Error:', err));
+        centrifuge.on('connected', (ctx) => console.log('Connected:', ctx));
+        centrifuge.on('disconnected', (ctx) => console.log('Disconnected:', ctx.reason, ctx.code));
+        centrifuge.on('error', (err) => console.error('Error:', err));
         centrifuge.connect();
 
         const channel = `${namespace}:question:${questionId}`;
-        console.log("📡 Subscribing to:", channel);
+        console.log("Subscribing to:", channel);
         
         const subscription = centrifuge.newSubscription(channel);
         
-        subscription.on('subscribed', (ctx) => console.log('📡 Subscribed:', ctx));
-        subscription.on('error', (err) => console.error('🚫 Subscribe error:', err));
+        subscription.on('subscribed', (ctx) => console.log('Subscribed:', ctx));
+        subscription.on('error', (err) => console.error('Subscribe error:', err));
         
         subscription.on("publication", (ctx) => {
-            console.log("📨 GOT PUBLICATION RAW:", ctx);  // ← ДОБАВИТЬ ЭТУ СТРОКУ ПЕРВОЙ
-            console.log("📨 Data:", ctx.data);
-            console.log("📨 Received publication:", ctx.data);
+            console.log("GOT PUBLICATION RAW:", ctx);
+            console.log("Data:", ctx.data);
+            console.log("Received publication:", ctx.data);
             const data = ctx.data;
             const params = new URLSearchParams(window.location.search);
             const currentPage = parseInt(params.get('page') || '1');
@@ -261,7 +260,7 @@
             token: token
         };
 
-        console.log("🐛 Debug ready: use window._debug.subscription.channel");
+        console.log("Debug ready: use window._debug.subscription.channel");
     });
     </script>
 

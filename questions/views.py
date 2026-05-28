@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.db.models import Count, OuterRef, Exists, Value, BooleanField
 from questions.models import Question, Tag, Profile, Answer, QuestionLike, AnswerLike
 from django.conf import settings
@@ -10,6 +10,7 @@ from questions.forms import AskForm, AnswerForm
 from questions.tasks import get_cached_popular_tags, get_cached_best_users, notify_new_answer
 import time
 import jwt
+import os
 
 def paginate(request, objects_list, per_page=4):
     if not objects_list:
@@ -197,3 +198,13 @@ def mark_best_answer(request, answer_id):
     answer.is_correct = True
     answer.save(update_fields=['is_correct'])
     return JsonResponse({'status': 'success', 'message': 'Best answer marked', 'answer_id': answer.pk})
+
+def static_via_django(request):
+    path = os.path.join(settings.STATIC_ROOT, 'test/perf_test.html')
+    with open(path, 'rb') as f:
+        data = f.read()
+    return HttpResponse(data, content_type='text/html')
+
+def dynamic_page(request):
+    content = b"<html><body><h1>Test</h1><p>" + b"X" * 2000 + b"</p></body></html>"
+    return HttpResponse(content, content_type='text/html')

@@ -12,5 +12,7 @@ urlpatterns = [
     path("ask", views.ask, name="ask"),
     path("question/<int:question_id>/like/", views.like_question, name="like_question"),
     path("answer/<int:answer_id>/like/", views.like_answer, name="like_answer"),
-    path('answer/<int:answer_id>/mark-best/', views.mark_best_answer, name='mark_best_answer')
+    path('answer/<int:answer_id>/mark-best/', views.mark_best_answer, name='mark_best_answer'),
+    path('static-gunicorn/', views.static_via_django, name='static_gunicorn'),
+    path('dynamic/', views.dynamic_page, name='dynamic_page'),
 ]
