@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Как подключить Bootstrap локально? | ItProger Forum</title>
+    <title>{{ question.title }} | ItProger Forum</title>
     <!-- <link rel="icon" href="static/img/favicon.ico" type="image/x-icon"> -->
 
     <link href="{% static 'questions/css/bootstrap.min.css' %}" rel="stylesheet">
@@ -58,9 +58,15 @@
                     <button class="btn btn-outline-secondary" type="submit">Найти</button>
                 </form>
 
-                <div class="d-flex align-items-center gap-2">
-                    <a href="{% url 'core:profile' %}" class="btn btn-outline-primary btn-sm">alex_dev</a>
-                    <a href="{% url 'questions:ask' %}" class="btn btn-success btn-sm">+ Вопрос</a>
+                <div class="header-actions d-flex align-items-center gap-2">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'core:profile' %}" class="btn btn-outline-primary btn-sm">{{ user.profile.display_name }}</a>
+                        <a href="{% url 'questions:ask' %}" class="btn btn-success btn-sm">+ Вопрос</a>
+                        <a href="{% url 'core:logout' %}" class="btn btn-outline-danger btn-sm">Выйти</a>
+                    {% else %}
+                        <a href="{% url 'core:login' %}" class="btn btn-outline-secondary btn-sm">Войти</a>
+                        <a href="{% url 'core:signup' %}" class="btn btn-primary btn-sm">Регистрация</a>
+                    {% endif %}
                 </div>
 
             </div>
@@ -72,113 +78,191 @@
             <div class="card-body">
 
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h1 class="h3 mb-0">Как подключить Bootstrap локально? {{question_num}}</h1>
-                    <span class="badge bg-success">3 ответа</span>
+                    <h1 class="h3 mb-0">{{ question.title }}</h1>
+                    <span class="badge bg-success">{{ question.answers_count }} ответов</span>
                 </div>
 
                 <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
-                    <div class="avatar-placeholder rounded-circle" style="width: 32px; height: 32px;">AD</div>
-                    <a href="{% url 'core:profile' %}" class="text-decoration-none text-dark fw-medium">
-                        alex_dev
+                    <div class="avatar-placeholder rounded-circle" style="width: 32px; height: 32px; overflow: hidden">
+                        {% if question.author.profile.avatar %}
+                            <img src="{{ question.author.profile.avatar.url }}">
+                        {% else %}
+                            {{ question.author.profile.display_name|slice:":2"|upper }}
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'core:profile_by_nickname' question.author.profile.display_name %}" class="text-decoration-none text-dark fw-medium">
+                        {{ question.author.profile.display_name }}
                     </a>
                     <span>•</span>
                     <time datetime="2026-03-10T14:30:00">
-                        10.03.2026 14:30
+                        {{ question.created_at }}
                     </time>
                 </div>
 
                 <div class="question-text mb-3">
                     <p class="card-text">
-                        Привет! Я пытаюсь подключить Bootstrap к своему проекту без использования CDN.
-                        Скачал файлы, положил в папку static, но стили не применяются.
-                        Подскажите, в чём может быть проблема? Может, пути неправильно указал?
+                        {{ question.text }}
                     </p>
                 </div>
 
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                    <a href="{% url 'questions:tag' 'bootstrap' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#bootstrap</a>
-                    <a href="{% url 'questions:tag' 'css' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#css</a>
-                    <a href="{% url 'questions:tag' 'html' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">#html</a>
+                    {% for tag in question.tags.all %}
+                        <a href="{% url 'questions:tag' 'bootstrap' %}" class="badge bg-secondary text-decoration-none hover-bg-dark">
+                            #{{ tag }}
+                        </a>
+                    {% endfor %}
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" disabled>
+                    <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 like-btn
+                        {% if user.is_authenticated and question.has_liked %}active-like{% endif %}"
+                        data-question-id="{{ question.id }}"
+                    >
                         <img src="{% static 'questions/img/like_icon.png' %}" alt="Лайк" width="20" height="14">
-                        <span>24</span>
+                        <span class="likes-count">{{ question.likes_count }}</span>
                     </button>
                 </div>
-
             </div>
         </article>
 
-
         <section class="mb-4">
-            <h2 class="h4 mb-3">Ответы ({{question}})</h2>
-            <article class="card shadow-sm mb-3 border-success border-2">
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="avatar-placeholder rounded-circle"
-                                style="width: 28px; height: 28px; font-size: 0.8rem;">MW</div>
-                            <a href="{% url 'core:profile' %}" class="text-decoration-none text-dark fw-medium">
-                                maria_web
-                            </a>
-                            <span class="text-muted small">•</span>
-                            <time datetime="2026-03-10T15:20:00" class="text-muted small">
-                                10.03.2026 15:20
-                            </time>
-                        </div>
-
-                        <span class="badge bg-success">
-                            ✓ Лучший ответ
-                        </span>
-                    </div>
-
-                    <div class="answer-text mb-3">
-                        <p class="card-text mb-0">
-                            Скорее всего, проблема в путях. Убедись, что структура папок такая:
-                            <code>project/static/css/bootstrap.min.css</code>.
-                            В HTML подключай так: <code>&lt;link href="static/css/bootstrap.min.css"&gt;</code>.
-                        </p>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-sm btn-primary d-flex align-items-center gap-1" disabled>
-                                <img src="{% static 'questions/img/like_icon.png' %}" alt="Лайк" width="20" height="14">
-                                <span>18</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </article>
-
-            {% for answer in answers %}
-                {% include "questions/partials/answer_card.html" %}
-            {% endfor %}
+            <h2 class="h4 mb-3">Ответы ({{ question.answers_count }})</h2>
+            <div id="answers-list">
+                {% for answer in answers %}
+                    {% include "questions/partials/answer_card.html" %}
+                {% empty %}
+                    <div id="no-answers-msg" class="text-center text-muted py-4 bg-light rounded">Пока нет ответов. Будьте первым!</div>
+                {% endfor %}
+            </div>
         </section>
 
         {% include "questions/partials/pagination.html" %}
 
-        <section id="answer-form" class="mb-5">
-            <h2 class="h4 mb-3">Ваш ответ</h2>
-            <form method="post" action="#">
-                <div class="mb-3">
-                    <textarea class="form-control" name="text" rows="5" placeholder="Напишите ваш ответ..."
-                        required></textarea>
-                    <div class="form-text">
-                        Пожалуйста, соблюдайте правила форума при написании вашего ответа.
+        {% if user.is_authenticated %}
+            <section id="answer-form" class="mb-5">
+                <h2 class="h4 mb-3">Ваш ответ</h2>
+                <form method="post" action="">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        {{ form.text }}
+                        
+                        {% if form.text.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.text.errors.0 }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="form-text">
+                            Пожалуйста, соблюдайте правила форума при написании вашего ответа.
+                        </div>
                     </div>
-                </div>
-                <button type="submit" class="btn btn-primary">Отправить ответ</button>
-            </form>
-        </section>
+                    <button type="submit" class="btn btn-primary">Отправить ответ</button>
+                </form>
+            </section>
+        {% else %}
+            <div class="alert alert-info">
+                <a href="{% url 'core:login' %}?next={{ request.path }}">Войдите</a>, чтобы оставить ответ.
+            </div>
+        {% endif %}
     </main>
 
     {% include "questions/partials/footer.html" %}
 
     <script src="{% static 'questions/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'questions/js/jquery.min.js' %}"></script>
+    <script src="{% static 'questions/js/main.js' %}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/centrifuge@5/dist/centrifuge.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = "{{ centrifugo_token|escapejs }}";
+        const wsUrl = "{{ centrifugo_ws_url|escapejs }}";
+        const namespace = "{{ centrifugo_namespace|escapejs }}";
+        const questionId = {{ question.id }};
+
+        console.log("Token:", token ? "present" : "empty");
+        console.log("URL:", wsUrl);
+        
+        if (!token || !wsUrl) {
+            console.log("Skipping Centrifuge init: no token or URL");
+            return;
+        }
+
+        const centrifuge = new Centrifuge(wsUrl, { token: token });
+        
+        centrifuge.on('connected', (ctx) => console.log('Connected:', ctx));
+        centrifuge.on('disconnected', (ctx) => console.log('Disconnected:', ctx.reason, ctx.code));
+        centrifuge.on('error', (err) => console.error('Error:', err));
+        centrifuge.connect();
+
+        const channel = `${namespace}:question:${questionId}`;
+        console.log("Subscribing to:", channel);
+        
+        const subscription = centrifuge.newSubscription(channel);
+        
+        subscription.on('subscribed', (ctx) => console.log('Subscribed:', ctx));
+        subscription.on('error', (err) => console.error('Subscribe error:', err));
+        
+        subscription.on("publication", (ctx) => {
+            console.log("GOT PUBLICATION RAW:", ctx);
+            console.log("Data:", ctx.data);
+            console.log("Received publication:", ctx.data);
+            const data = ctx.data;
+            const params = new URLSearchParams(window.location.search);
+            const currentPage = parseInt(params.get('page') || '1');
+            
+            const answersList = document.getElementById('answers-list');
+            const noAnswersMsg = document.getElementById('no-answers-msg');
+
+            if (!answersList || (answersList.children.length <= 1 && noAnswersMsg)) {
+                window.location.reload();
+                return;
+            }
+
+            if (currentPage === 1) {
+                const answerHtml = `
+                    <div id="answer-${data.id}" class="card mb-3 shadow-sm border-0 new-answer-highlight">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:0.8rem;">
+                                        ${data.author_name.substring(0,2).toUpperCase()}
+                                    </div>
+                                    <span class="fw-medium">${data.author_name}</span>
+                                </div>
+                                <small class="text-muted">${data.created_at}</small>
+                            </div>
+                            <div class="answer-text mb-2">${data.text.replace(/\n/g, '<br>')}</div>
+                            ${data.is_correct ? '<span class="badge bg-success">✓ Лучший ответ</span>' : ''}
+                        </div>
+                    </div>
+                `;
+                
+                answersList.insertAdjacentHTML('afterbegin', answerHtml);
+                if (noAnswersMsg) noAnswersMsg.remove();
+
+                const newEl = document.getElementById(`answer-${data.id}`);
+                if (newEl) {
+                    newEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else {
+                const questionTitle = document.querySelector('h1.h3')?.innerText.trim() || 'этот вопрос';
+                alert(`На вопрос "${questionTitle}" появился новый ответ!`);
+            }
+        });
+
+        subscription.subscribe();
+        window._debug = {
+            centrifuge: centrifuge,
+            subscription: subscription,
+            channel: channel,
+            token: token
+        };
+
+        console.log("Debug ready: use window._debug.subscription.channel");
+    });
+    </script>
 
 </body>
 </html>
